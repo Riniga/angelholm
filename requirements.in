@@ -19,15 +19,34 @@
 # packages for the same requirements.in (see the example comment below); if CI's drift
 # check fails after a local Windows edit, trust CI's diff over your own local output.
 
-# Example of the platform-conditional-package gotcha this project hit twice (colorama via
-# tqdm's Windows-only marker; tzdata via a pandas version that needed it on Windows but not
-# Linux): when a package silently differs between a local Windows compile and CI's Linux
-# compile, pin it here explicitly and unconditionally rather than letting a transitive
-# marker decide it per platform. Delete this comment and the example line below once you
-# have real dependencies and have hit (or ruled out) the same issue yourself.
-# example-transitive-package==1.2.3
+# Platform-conditional-package gotcha, hit for real (MVP-001 PR #3's CI, not a guess):
+# `pytest` declares `colorama>=0.4 ; sys_platform == "win32"`. Compiling this file on
+# Windows resolved that marker true and included colorama; CI's own Linux recompile
+# resolves it false and drops it — a real diff, not a hash-ordering false alarm (see
+# MVP-000/001's close-out notes for that separate, harmless kind of noise). Pinned
+# explicitly and unconditionally below so both platforms agree, per this file's own
+# standing guidance above.
+colorama==0.4.6
 
 # Ruff is pinned exactly — its formatter/lint output changes between minor versions. Keep
 # it on the same version as `rev` in .pre-commit-config.yaml.
 ruff==0.16.7
 pre-commit>=3,<5
+# docs/standards/testing.md and ci.yml's "Run tests" job both assume pytest-cov (`pytest
+# --cov`), but nothing had actually added it as a dependency until now — a real gap that
+# was masked by GAP-E2-CICHAIN failing that same CI job earlier, before the coverage step
+# ever ran. Discovered by actually running `pytest --cov` locally (MVP-001 Phase 2), not by
+# reading the config.
+pytest-cov>=5,<7
+
+# SUMO mobility simulation engine (MVP-001 — see docs/plans/001-first-traffic-simulator.plan.md
+# and ADR-006). Pinned exactly, all three at the same version deliberately: `traci`/`sumolib`
+# are thin Python APIs over the `eclipse-sumo` binaries and must match the engine version they
+# talk to, not just satisfy a loose range. Note the real PyPI name is `eclipse-sumo` —
+# conda-forge's own package literally called `sumo` is an unrelated, different project
+# (ab-initio solid-state-physics plotting tools); do not install that one.
+# Licence: dual EPL-2.0/GPL-2.0-or-later — approved by the project owner 2026-09-16, see
+# docs/standards/dependencies.md's allow-list.
+eclipse-sumo==1.27.1
+traci==1.27.1
+sumolib==1.27.1

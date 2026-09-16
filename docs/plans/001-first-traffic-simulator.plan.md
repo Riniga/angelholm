@@ -2,7 +2,7 @@
 
 Reference: [`docs/mvp/001-first-traffic-simulator.md`](../mvp/001-first-traffic-simulator.md)
 
-**Status:** Not started — TODOs are written, none executed yet.
+**Status:** Complete — all 5 phases done, MVP closed 2026-09-16 as delivered.
 
 ## 0. Investigation
 
@@ -78,87 +78,138 @@ intervention or errors — matching every acceptance criterion in
 
 ### Phase 1: Add the SUMO toolchain as a dependency
 
-- [ ] Add `eclipse-sumo`, `traci`, `sumolib` (pinned to the same verified `1.27.1`-compatible
-  range) to `requirements.in`.
-- [ ] Recompile `requirements-lock.txt`
-  (`pip-compile --generate-hashes --no-annotate --no-header
-  --output-file=requirements-lock.txt requirements.in`) and commit both files.
-- [ ] Verify inside the `angelholm` env: `python -m sumo --version` (or the installed
-  console script), `python -c "import traci, sumolib"`, and that `netconvert`/
-  `randomTrips.py` are reachable (as scripts inside the installed package, not
-  necessarily on `PATH` — confirm the actual invocation path during this step, don't
-  assume `PATH` placement).
-- [ ] **Raise the licence-allowlist gap with the user before this phase is considered
-  done** — do not silently add an unreviewed licence to `docs/standards/dependencies.md`'s
-  allow-list.
-- [ ] Write ADR: "Use SUMO (`eclipse-sumo`) as the mobility simulation engine and
-  OpenStreetMap/Overpass as the geographic data source" — include the conda-forge
-  name-collision finding as context for future readers.
+- [x] Add `eclipse-sumo`, `traci`, `sumolib` (pinned to the same verified `1.27.1`-compatible
+  range) to `requirements.in`. Result: `sumo-data==1.27.1` was also pulled in automatically
+  as a transitive dependency (bundled default templates) — not something to pin separately.
+- [x] Recompile `requirements-lock.txt` and commit both files. Result: verified no real
+  drift via a proper per-package hash-set comparison (order-independent) before and after —
+  same lesson as MVP-000's close-out, `pip-compile`'s hash-line order isn't stable.
+- [x] Verify inside the `angelholm` env. Result: `sumo --version` →
+  `Eclipse SUMO sumo 1.27.1` (copyright DLR); `netconvert --version` works; both are real
+  console scripts on the env's `Scripts/` dir (`sumo.exe`, `sumo-gui.exe`,
+  `netconvert.exe`, `duarouter.exe`), directly callable, not requiring a `python -m`
+  invocation. `randomTrips.py` is at
+  `Lib/site-packages/sumo/tools/randomTrips.py` (a script, not a console entry point —
+  invoke via `python <path>`). `import traci, sumolib` succeeds.
+- [x] Raise the licence-allowlist gap with the user before this phase is considered done.
+  Result: approved by the project owner 2026-09-16. Added the exact string `pip-licenses`
+  reports (`EPL-2.0 OR GPL-2.0-or-later`, verified for real, not guessed) to `ci.yml`'s
+  allow-list and to `docs/standards/dependencies.md`, which — while here — was also
+  upgraded from a still-unfilled template list to the real, actual allow-list `ci.yml`
+  already enforced.
+- [x] Write ADR-006: SUMO + OpenStreetMap as the simulation engine and geographic data
+  source, including the conda-forge name-collision finding as context.
 
 ### Phase 2: Create the simulator app skeleton
 
-- [ ] Create `apps/simulator/` — first real app in the workspace (see
-  `docs/architecture/overview.md` "Planned Evolution").
-- [ ] Add a minimal `apps/simulator/pyproject.toml` (packaging metadata only, per
-  `AGENTS.md`'s `pip install -e apps/<app>` convention) and a `tests/` folder.
-- [ ] Resolve the long-standing placeholders this unblocks: `pyproject.toml`'s
-  `[tool.ruff] src` / `[tool.coverage.run] source`, `pytest.ini`'s `testpaths` — point them
-  at the real `apps/simulator` paths instead of `<your_package_1>` etc.
-- [ ] Update `AGENTS.md`'s "Applications" table and "Local commands" block, `README.md`'s
-  workspace-structure note, and `docs/architecture/current-state.md`'s Applications table —
-  all currently say "none yet."
+- [x] Create `apps/simulator/` — first real app in the workspace (src-layout:
+  `apps/simulator/src/simulator/`, `apps/simulator/tests/`).
+- [x] Add a minimal `apps/simulator/pyproject.toml` (setuptools, src-layout, exact-pinned
+  SUMO deps matching `requirements.in`) and a `tests/` folder with one real smoke test.
+- [x] Resolve the long-standing placeholders this unblocks: `pyproject.toml`'s
+  `[tool.ruff.lint.isort] known-first-party` / `[tool.coverage.run] source`, `pytest.ini`'s
+  `testpaths` — all point at `simulator`/`apps/simulator` now. `fail_under` deliberately
+  left as a placeholder (ADR-004) — a real baseline is meaningless against today's trivial
+  skeleton, deferred to Phase 5.
+- [x] Update `AGENTS.md`, `README.md`, `docs/architecture/current-state.md`.
+  Result: also found and fixed a real, previously-masked bug while verifying —
+  `pytest-cov` was never actually installed (`pytest --cov` failed with "unrecognized
+  arguments"), even though `docs/standards/testing.md` and `ci.yml` both assumed it. Added
+  to `requirements.in`, lock recompiled, verified working (100% on the trivial skeleton, as
+  expected). Also closed `GAP-E2-CICHAIN` — fixed all 3 remaining `<placeholder>` bugs in
+  `ci.yml` (`Run tests`' install step, `SAST`'s `--error`, `Dependencies`' licence-scan
+  `--ignore-packages`) now that `apps/simulator` gives them real values to point at.
 
 ### Phase 3: Fetch OSM data and build the routable network
 
-- [ ] Script the Overpass fetch for the verified bbox (`56.2430,12.8580,56.2470,12.8660`),
-  saving raw OSM XML under `apps/simulator/data/` — decide, and record the decision, whether
-  to commit this extract as a fixture (reproducibility, per the "Scenarios Should Be
-  Reproducible" principle in `overview.md`) or re-fetch live each run (freshness, but
-  network-dependent); default recommendation is to commit a small snapshot.
-- [ ] Run `netconvert --osm-files <file> -o network.net.xml`; verify a clean exit code and
-  no unhandled warnings.
-- [ ] Sanity-check the resulting network (edge/junction count > 0, loads back via `sumolib`).
+- [x] Script the Overpass fetch for the verified bbox. Result: used SUMO's own official
+  `osmGet.py` tool (not a hand-rolled query) via `simulator.network.fetch_osm_extract()`.
+  **Decision: commit the extract as a fixture** (`apps/simulator/data/angelholm_bbox.osm.xml`,
+  ~537 KB) — per the plan's default recommendation and "Scenarios Should Be Reproducible".
+  Real, non-obvious finding: the public Overpass server returned a genuine `HTTP 504
+  Gateway Timeout` on the first attempt — added `--retries 5 --retry-delay 10` to the
+  function as a result, not just a one-off manual retry.
+- [x] Run `netconvert --osm-files <file> -o network.net.xml` via
+  `simulator.network.build_network()`. Result: clean exit (`Success.`); final (corrected
+  bbox) network is ~1.0 MB, larger than the original area's 379 KB — a denser road area.
+  Real warnings appeared (unrelated PT-line/waterway edge cases from data extending past
+  the small bbox) — expected and handled gracefully by `netconvert` itself, not a road
+  network problem; not worth suppressing or treating as a failure.
+- [x] Sanity-check the resulting network. Result: loads via `sumolib.net.readNet` — **519
+  edges, 227 junctions**, both `> 0`, confirmed for real.
+
+**Post-close correction (during PR prep):** the active area was changed to a different
+neighbourhood of Ängelholm. The replacement bbox as first entered had **inverted
+south/north values** — `osmGet.py` itself rejected it for real
+(`error: Invalid geocoordinates in bbox.`), not a guess. Fixed by swapping the two
+latitude values; re-ran Phases 3–4 end-to-end against the corrected bbox (numbers above
+are the corrected, final ones). The original bbox is kept as a commented-out, labelled
+alternative in `network.py`.
 
 ### Phase 4: Generate traffic and run the simulation
 
-- [ ] Use `randomTrips.py` (or `sumolib`/`traci` directly) to generate ≥ 10 random vehicle
-  trips over the network.
-- [ ] Write a `.sumocfg` tying the network and routes together.
-- [ ] Verify headless `sumo -c <config>` runs to completion with no errors — this is the
-  one part of the acceptance criteria that can be automated/checked programmatically.
-- [ ] **Manual step, needs the user**: open the same config in `sumo-gui` and confirm the
-  network and moving vehicles are visible — cannot be verified from this session (no
-  display).
+- [x] Use `randomTrips.py` to generate ≥ 10 random vehicle trips over the network, via
+  `simulator.traffic.generate_traffic()`. Result: **14 vehicles** for real (fixed
+  `seed=42`, reproducible). Found and fixed a real bug along the way: without an explicit
+  `-o`, `randomTrips.py` drops an intermediate `trips.trips.xml` in the *current working
+  directory*, not next to the route file — it leaked to the repo root on the first run.
+  Pinned explicitly now.
+- [x] Write a `.sumocfg` tying the network and routes together, via
+  `simulator.traffic.write_sumocfg()` — paths written relative to the config file, tested
+  for both same-directory and cross-directory placement.
+- [x] Verify headless `sumo -c <config>` runs to completion with no errors, via
+  `simulator.simulate.run_headless()`. Result: ran for real — **"Simulation completed
+  successfully."**
+- [x] **Manual step, needed the user**: open `apps/simulator/data/angelholm.sumocfg` in
+  `sumo-gui` and confirm the network and moving vehicles are visible. Result (original
+  bbox): confirmed by the project owner directly — also confirmed the area itself against
+  Google Maps as real central Ängelholm. Surfaced a real usability bug in the process
+  (default playback too fast to watch) — fixed with the `<gui_only><delay>` setting (see
+  Phase 5).
+  **Re-confirmed after the bbox correction**: the project owner opened the corrected
+  simulation in `sumo-gui` again and confirmed it looks correct (519 edges, 227
+  junctions).
+
+Also decided: `.rou.xml`/`.sumocfg` are cheap, deterministic outputs of our own code run
+against the already-committed network (fixed seed) — unlike the OSM extract, not worth
+committing as static fixtures. Added to `.gitignore` instead; Phase 5's entrypoint
+regenerates them each run.
 
 ### Phase 5: Wire up a repeatable start command and update docs
 
-- [ ] Add a documented entrypoint (e.g. `apps/simulator/run.py` or a small script) so "a
-  developer can start the simulation again using documented project instructions" is
-  concretely true, not just implied.
-- [ ] Update `docs/architecture/overview.md`'s "Major Components" (Geographic Model /
-  Mobility Simulation move from "not yet implemented" to a real, minimal implementation)
-  and "Current Workspace Structure".
-- [ ] Update `docs/architecture/current-state.md`'s Applications table with the new
-  `apps/simulator` row (status, test count, capabilities).
-- [ ] Run `pytest -q`, `ruff format --check .`, `ruff check .`; confirm all green.
-- [ ] Fill in `docs/mvp/001-first-traffic-simulator.md`'s "Outcome at close" against each
-  acceptance criterion, honestly — including the GUI check, which only the user can attest
-  to.
+- [x] Add a documented entrypoint. Result: `simulator/run.py`'s `main()`, registered as
+  the `simulator` console command (`[project.scripts]` in `apps/simulator/pyproject.toml`)
+  — confirmed working for real from the command line (`simulator --headless`), not just
+  through test mocks. `--rebuild-network` and `--headless` flags; reuses the committed
+  network by default. Added `run_gui()` to `simulate.py` alongside it.
+- [x] Update `docs/architecture/overview.md`'s "Major Components", "Current Workspace
+  Structure", "Existing Dependencies", "Build and Development Process", and the
+  "Simulation Engine Should Remain Replaceable"/"Domain product" sections — all had gone
+  stale describing the pre-MVP-001 state.
+- [x] Update `docs/architecture/current-state.md`'s Applications table, Test counts.
+- [x] Run `pytest -q`, `ruff format --check .`, `ruff check .`; confirm all green. Result:
+  21 tests, 99.13% coverage — real baseline measured, floor set to 95% (`ADR-004`,
+  `GAP-D1-COVERAGE` closed), not left as a placeholder any longer.
+- [x] Fill in `docs/mvp/001-first-traffic-simulator.md`'s "Outcome at close". Result:
+  closed as **delivered** — all 6 acceptance criteria met, including the GUI check,
+  confirmed directly by the project owner (who also caught a real usability bug: default
+  playback was too fast to watch, fixed with a `<gui_only><delay>` setting).
 
 ## 5. Risks / open questions
 
-- **Licence allow-list**: this plan cannot resolve whether EPL-2.0/GPL-2.0-or-later is
-  acceptable for this project — that needs the user (or whoever owns licence policy here)
-  to decide and record it in `docs/standards/dependencies.md`, per its own exception
-  process. Blocking for Phase 1/CI, not something to route around.
-- **GUI verification** is inherently manual — no amount of automation in this session
-  substitutes for the user actually watching `sumo-gui` run.
-- **OSM extract reproducibility**: committing a data snapshot vs. fetching live each run is
-  a real trade-off (offline/reproducible vs. always-current); Phase 3 proposes committing a
-  snapshot as the default, open to being overridden.
-- The bbox is a verified-real but still first-pass choice — if the user wants a different,
-  more recognizable area of Ängelholm, that's a cheap change before Phase 3 runs the fetch,
-  not after.
+All resolved by close, except the last:
+
+- ~~Licence allow-list~~ — resolved: approved by the project owner 2026-09-16.
+- ~~GUI verification~~ — resolved: confirmed by the project owner directly in `sumo-gui`.
+- ~~OSM extract reproducibility~~ — resolved: committed as a fixture, per the default
+  recommendation.
+- ~~The bbox is a first-pass choice~~ — resolved: confirmed correct by the project owner
+  against Google Maps (central Ängelholm).
 - `apps/simulator/pyproject.toml`'s shape (dependencies section, entry points) hasn't been
   precedented anywhere in this repo yet — this plan is also implicitly setting the pattern
-  the next app will copy; worth a second look before merging for exactly that reason.
+  the next app will copy; worth a second look from a reviewer for exactly that reason. Not
+  resolved by this plan itself — a review-time consideration, not a blocker.
+- New, not anticipated when this plan was written: the 3 CI jobs `GAP-E2-CICHAIN` fixed
+  (`SAST`, `Dependencies`, `Run tests`) are only verified locally, not yet confirmed green
+  on a real GitHub Actions run — worth watching on this PR before adding them as required
+  status checks.

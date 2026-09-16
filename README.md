@@ -14,22 +14,24 @@ version.
 
 ## Workspace Structure
 
-The workspace does not yet contain any applications or shared packages — it is still in its
-initial bootstrap phase. See [`docs/architecture/overview.md`](docs/architecture/overview.md)
-for the current state and the possible future structure.
+The workspace has its first application; no shared packages exist yet. See
+[`docs/architecture/overview.md`](docs/architecture/overview.md) for the current state and
+the possible future structure.
 
 ```text
 docs/
     Architecture, development process, standards, roadmap, MVPs and implementation plans
 
-apps/        (not yet created — see docs/architecture/overview.md "Planned Evolution")
+apps/
+    simulator/   First traffic simulation for a small real-world area of Ängelholm (MVP-001)
+
 packages/    (not yet created — see docs/architecture/overview.md "Planned Evolution")
 ```
 
 > **Note**
 >
-> The workspace is currently being established. Additional applications, shared packages
-> and documentation will be introduced incrementally as the project evolves.
+> The workspace is still growing one MVP at a time. Additional applications, shared
+> packages, and documentation will be introduced incrementally as the project evolves.
 
 ## Development Process
 

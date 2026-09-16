@@ -39,7 +39,7 @@ select = ["E4", "E7", "E9", "F", "W", "I", "UP", "B", "C4", "C90"]
 max-complexity = 20
 
 [tool.ruff.lint.isort]
-known-first-party = ["<your_package_1>", "<your_package_2>"]
+known-first-party = ["simulator"]
 
 [tool.ruff.format]
 # Ruff defaults: double quotes, 4-space indent, magic trailing comma.
@@ -53,10 +53,14 @@ line-ending = "lf"
 # doc — never lowered to make a failing build pass.
 [tool.coverage.run]
 source = [
-    "<path/to/package_1/src>",
-    "<path/to/package_2/src>",
+    "apps/simulator/src",
 ]
 
 [tool.coverage.report]
-fail_under = 50 # placeholder — replace with your own measured-baseline floor
+# Real, measured baseline (ADR-004, GAP-D1-COVERAGE, MVP-001 Phase 5): apps/simulator
+# measured at 99.13% (`pytest -q --cov`, 2026-09-16; only uncovered line is run.py's
+# `__main__` guard, reasonably left uncovered per docs/standards/coding.md). Floor set
+# just below that, not at 99 itself, per the ratchet policy's own reasoning — see
+# docs/methodology-compliance/interpretations.md.
+fail_under = 95
 skip_covered = true

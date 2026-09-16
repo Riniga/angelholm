@@ -17,7 +17,17 @@ This workspace contains an urban mobility simulation project for modelling how p
 
 The project is intended to provide an experimental environment where infrastructure and traffic conditions can be changed and the resulting effects on mobility can be simulated, measured and compared. See [`docs/vision.md`](../vision.md) for the full purpose and principles, and [`docs/roadmap.md`](../roadmap.md) for the planned delivery stages (R0–R5).
 
-**No application code exists yet.** There is no `apps/`, no `packages/`, and no automated tests. The repository was initialised from a generic, organisation-wide reference skeleton (referred to in the repository as a "grundplåt") that ships a working development process, quality gates and AI-collaboration structure before any project-specific code is written; its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) have all been carried out and the file deleted, per its own instruction. Project-identity placeholders (project name, Conda environment name, security contact) have been replaced across `README.md`, `AGENTS.md`, `SECURITY.md`, `environment.yml`, `docs/development/setup.md`/`environment.md`, `.github/workflows/ci.yml`, `docs/vision.md`, `docs/roadmap.md`, and this file, and a real, verified `requirements-lock.txt` exists. Two real MVPs with implementation plans are written and ready — `docs/mvp/000-workspace-foundation.md` (ADRs, methodology-compliance baseline, repo settings) and `docs/mvp/001-first-traffic-simulator.md` (the first actual application) — but neither has been implemented yet. The placeholders that remain all depend on an app or package that doesn't exist yet (`pyproject.toml`, `pytest.ini`, `.env.example`, parts of `ci.yml`) — see "Open Questions and Areas Not Yet Implemented" below.
+**Both MVPs so far are complete.** `apps/simulator` (MVP-001) is a real, working
+application — fetches OpenStreetMap data, builds a routable SUMO network, generates
+traffic, and runs the simulation headless or via `sumo-gui`, all through the `simulator`
+console command. MVP-000 (workspace foundation: ADRs, methodology-compliance baseline,
+repo settings) closed first and MVP-001 built on top of it. The repository was initialised
+from a generic, organisation-wide reference skeleton (referred to in the repository as a
+"grundplåt"); its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) were fully carried out and
+the file deleted, per its own instruction, before either MVP began. No `packages/` exists
+yet — nothing has been reused by ≥2 apps. The placeholders that remain (`.env.example`'s
+per-service variables) depend on a service that doesn't exist yet — see "Open Questions and
+Areas Not Yet Implemented" below.
 
 ---
 
@@ -27,96 +37,99 @@ The project is intended to provide an experimental environment where infrastruct
 /
 ├── AGENTS.md                      Canonical, tool-neutral AI-assistance instructions
 ├── CLAUDE.md                      Thin pointer to AGENTS.md (Claude Code specific)
-├── README.md                      Project entry point — project-identity values resolved
-├── SECURITY.md                    Vulnerability reporting — contact resolved
+├── README.md                      Project entry point
+├── SECURITY.md                    Vulnerability reporting
 ├── environment.yml                Conda environment definition (`name: angelholm`)
-├── pyproject.toml                 Ruff + coverage config (no [project]/[build-system] table)
-├── pytest.ini                     pytest config (testpaths still placeholders — no
-│                                   package exists yet to point at)
-├── requirements.in                Source list for the pip lockfile
-├── requirements-lock.txt          Generated, hash-pinned lock — `conda env create` works
+├── pyproject.toml                 Ruff + coverage config; `known-first-party`/`source`
+│                                   point at `simulator`/`apps/simulator/src`
+├── pytest.ini                     pytest config — `testpaths` points at
+│                                   `apps/simulator/tests`
+├── requirements.in                Source list for the pip lockfile (Ruff, pre-commit,
+│                                   pytest-cov, SUMO toolchain)
+├── requirements-lock.txt          Generated, hash-pinned lock
 ├── .env.example                   Documents the convention; no real variables listed yet
 ├── .pre-commit-config.yaml        Local Git hooks: Ruff + file validators + detect-secrets
 ├── .secrets.baseline              detect-secrets baseline (fresh/empty)
-├── .editorconfig / .gitattributes Formatting and line-ending baseline
-├── .gitignore
+├── .editorconfig / .gitattributes Formatting and line-ending baseline (incl. `*.xml`)
+├── .gitignore                     Also ignores apps/simulator's regenerated
+│                                   routes/`.sumocfg` (cheap to rebuild, not fixtures)
 ├── .claude/settings.json          Claude Code tool-permission allow/ask lists
 ├── .github/
 │   ├── workflows/ci.yml           PR gate: lint, dependency scan, SAST, secret scan,
-│   │                               instruction-file scan, tests (see below)
+│   │                               instruction-file scan, tests — all 6 jobs point at
+│   │                               real values now (`apps/simulator`, `simulator`)
 │   ├── workflows/dast.yml         Manual-only OWASP ZAP baseline scan (not a gate)
 │   ├── dependabot.yml             Weekly update PRs: pip, github-actions
 │   ├── copilot-instructions.md    Thin pointer to AGENTS.md (Copilot specific)
 │   └── pull_request_template.md   Definition-of-Done checklist + AI-assistance checkbox
 ├── scripts/
 │   └── scan_instruction_files.py  CI helper: scans AGENTS.md/CLAUDE.md for hidden Unicode
+├── apps/
+│   └── simulator/                 First real application (MVP-001) — see "Major
+│       ├── pyproject.toml         Components" below for what it does
+│       ├── src/simulator/         network.py, traffic.py, simulate.py, run.py (the
+│       │                          `simulator` console command), _paths.py (shared helper)
+│       ├── tests/                 22 tests, mocked/deterministic, 99% coverage
+│       └── data/                  angelholm_bbox.osm.xml, network.net.xml — committed
+│                                   fixtures; routes/.sumocfg regenerated on demand
 └── docs/
     ├── vision.md                  Project-specific — long-term purpose and principles
     ├── roadmap.md                 Project-specific — R0/R1–R5 roadmap areas, MVP index
     ├── architecture/
     │   ├── overview.md            This file
-    │   ├── current-state.md       Quick-scan status table — reflects "no apps yet"
-    │   └── decisions/             ADR index (empty) + ADR-TEMPLATE.md
+    │   ├── current-state.md       Quick-scan status table
+    │   └── decisions/             6 ADRs + index + ADR-TEMPLATE.md
     ├── development/               setup.md, environment.md, tools.md, methodology.md,
     │                               repo-settings.md, secrets-rotation.md, uat-checklist.md
     ├── standards/                 coding.md, testing.md, git.md, documentation.md,
     │                               dependencies.md, threat-modeling.md
     ├── methodology/                Projektets utvecklingsmetodik — 21 chapters, areas A–F
     │                               (org-wide, copied in verbatim; v1.0, 2026-09-07)
-    ├── methodology-compliance/     README.md, gap-register.md, interpretations.md,
-    │                               exceptions.md, _template.md — structure only, no
-    │                               project-specific rows filled in yet (tracked by MVP-000)
+    ├── methodology-compliance/     Real baseline (MVP-000): 4 interpretations, 6
+    │                               gap-register rows, 1 exception (`EX-001`)
     ├── claude-prompts/             Generic bootstrap/plan/MVP-completion prompts for Claude
     │                               Code, including this file's own generating prompt
-    ├── mvp/                        000-workspace-foundation.md, 001-first-traffic-simulator.md
-    │                               — two real MVPs; the TEMPLATE.md/EXAMPLE-*.md files have
-    │                               been deleted now that real ones exist
-    └── plans/                      000-workspace-foundation.plan.md,
-                                    001-first-traffic-simulator.plan.md — real implementation
-                                    plans for both MVPs above; not yet executed
+    ├── mvp/                        000-workspace-foundation.md (closed, delivered),
+    │                               001-first-traffic-simulator.md (closed, delivered)
+    └── plans/                      000-workspace-foundation.plan.md (complete),
+                                    001-first-traffic-simulator.plan.md (complete)
 ```
 
-`apps/`, `packages/`, `tests/`, and `data/` do not exist yet. This structure should be
-updated as soon as the first executable components are introduced (expected with MVP-001,
-see `docs/roadmap.md`).
+`packages/`, `tests/` (repo-level), and `data/` (repo-level) do not exist yet. This
+structure should be updated in the same PR as any further change to it.
 
 ---
 
 ## Major Components
 
-No application components have yet been implemented.
-
-The following architectural responsibilities have been identified from `docs/vision.md` but should not be considered implemented components.
+Two components have a first, minimal, real implementation (`apps/simulator`, MVP-001). The
+rest are architectural responsibilities identified from `docs/vision.md`, not yet built.
 
 ### Geographic Model
 
-Responsible for representing the physical city and its transport network.
+**Implemented (minimal), MVP-001.** `simulator.network.fetch_osm_extract()` downloads a
+real OpenStreetMap extract (via SUMO's own `osmGet.py`) for a small, verified area of
+central Ängelholm — see `ADR-006`. Committed as a fixture:
+`apps/simulator/data/angelholm_bbox.osm.xml`.
 
-Expected information includes:
-
-* Roads and intersections.
-* Lanes and permitted transport modes.
-* Pedestrian and bicycle infrastructure.
-* Speed limits and other network restrictions.
-* Geographic features needed for visualization.
-
-OpenStreetMap is currently the primary candidate source for geographic data.
+Covered so far: roads, intersections, lanes/permitted modes as encoded in OSM way tags —
+whatever `netconvert` extracts from raw OSM XML. Not yet covered (see "Domain / product"
+below): dedicated handling of pedestrian/bicycle infrastructure, speed-limit overrides
+beyond OSM defaults, non-road geographic features (buildings, water, parks).
 
 ### Mobility Simulation
 
-Responsible for executing movements through the transport network.
+**Implemented (minimal), MVP-001.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly
+pinned — `ADR-006`) is the simulation engine, not just a candidate anymore.
+`simulator.network.build_network()` converts the OSM extract into a routable network via
+`netconvert` (verified for real: 519 edges, 227 junctions);
+`simulator.traffic.generate_traffic()` + `simulator.simulate.run_headless()`/`run_gui()`
+generate synthetic vehicle trips and run the simulation, headless or interactive.
 
-The current primary candidate is **SUMO (Simulation of Urban MObility)**.
-
-Expected responsibilities include:
-
-* Vehicle movement.
-* Pedestrian and bicycle movement.
-* Routing.
-* Traffic interactions.
-* Traffic signals.
-* Congestion.
-* Dynamic changes to the transport network.
+Covered so far: vehicle movement, routing, traffic interactions, running to completion —
+all for a single, small area over a short simulated time window. Not yet covered:
+pedestrian/bicycle movement, traffic signals as a distinct concern, congestion analysis,
+dynamic network changes (all explicitly out of MVP-001's scope, see its own document).
 
 ### Population and Travel Demand
 
@@ -163,11 +176,12 @@ Potential measurements include:
 
 ### Visualization and User Interface
 
-A dedicated user interface has not yet been selected or implemented.
-
-SUMO's existing visualization capabilities are expected to be sufficient during the initial MVPs.
-
-A dedicated interactive map and experiment interface may be introduced later if required.
+**`sumo-gui` in active use, MVP-001.** `simulator.simulate.run_gui()` launches it,
+configured via a `<gui_only><delay .../></gui_only>` section in the generated `.sumocfg`
+so playback is actually watchable by a human (found necessary after real use — the
+simulation otherwise finishes in a couple of real seconds). No dedicated interactive
+map/experiment interface exists — SUMO's own visualization remains sufficient for now, as
+originally expected.
 
 ---
 
@@ -175,27 +189,29 @@ A dedicated interactive map and experiment interface may be introduced later if 
 
 ### Runtime
 
-No application runtime dependencies exist yet — there is no application code to depend on anything.
+`apps/simulator` (MVP-001) depends on:
 
-Likely initial external systems, named in `docs/vision.md`/`docs/architecture/overview.md` as candidates only, are:
-
-* OpenStreetMap data.
-* SUMO simulation engine.
-* Python for simulation orchestration and analysis.
-
-None of these are declared in any dependency file yet.
+* **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly pinned to `1.27.1`) — the mobility
+  simulation engine. `ADR-006` records the choice, including a real gotcha: conda-forge's
+  own package literally named `sumo` is a different, unrelated project. Licence
+  (`EPL-2.0 OR GPL-2.0-or-later`) approved by the project owner and added to
+  `docs/standards/dependencies.md`'s allow-list.
+* **OpenStreetMap data**, fetched via SUMO's own `osmGet.py` (Overpass API) — not a
+  separate pip dependency, bundled with `eclipse-sumo`'s `tools/`.
+* **`sumo-data`** — pulled in automatically as `eclipse-sumo`'s own transitive dependency
+  (bundled default templates), not something this project chose to depend on directly.
 
 ### Development / tooling dependencies
 
-Unlike the runtime layer, the **tooling** dependency surface is already scaffolded, though not yet exercised against real code:
+The **tooling** dependency surface, now exercised against real code (`apps/simulator`):
 
-* `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, which **has been generated and verified not to have drifted** from `requirements.in`.
-* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps) and `pre-commit>=3,<5`.
-* `pyproject.toml` — `[tool.ruff]` (formatter/linter config) and `[tool.coverage]` (coverage gate); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. Source roots (`src`, `known-first-party`) and the coverage `source` list are still placeholders (`<your_package_1>`, etc.).
-* `pytest.ini` — `testpaths` still points at placeholder paths (`<path/to/package_1/tests>`); no real package exists to point at yet.
-* `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files`, and `detect-secrets`.
+* `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, verified not to have drifted from `requirements.in`.
+* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps), `pre-commit>=3,<5`, `pytest-cov>=5,<7` (added MVP-001 Phase 2 — was referenced by `testing.md`/`ci.yml` but never actually installed until then), and the SUMO toolchain above.
+* `pyproject.toml` — `[tool.ruff]` (formatter/linter config, `known-first-party = ["simulator"]`) and `[tool.coverage]` (coverage gate, `source = ["apps/simulator/src"]`); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. `fail_under = 95` — a real, measured baseline (99%+ on `apps/simulator`), not a placeholder any longer (`ADR-004`, `GAP-D1-COVERAGE` closed).
+* `pytest.ini` — `testpaths = apps/simulator/tests`.
+* `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files` (threshold raised to 600 KB, documented, for the committed OSM fixture), and `detect-secrets`.
 
-`conda env create -f environment.yml && conda activate angelholm` has been run successfully against the committed lock file — the toolchain itself works end-to-end. What hasn't happened yet is exercising it against real project code, since `pyproject.toml`'s and `pytest.ini`'s package-path placeholders (above) still don't point at anything real.
+`conda env create -f environment.yml && conda activate angelholm` plus `pip install -e apps/simulator` gives a fully working environment — verified end-to-end, including running the actual `simulator` console command for real.
 
 ### AI Assistants
 
@@ -214,23 +230,31 @@ AI-assisted development is supported through:
 
 ### Environment Setup
 
-Documented in `docs/development/setup.md`, `environment.md`, and `tools.md` (Conda + `pip-tools`, per-app `pip install -e`). The Conda environment is named `angelholm` and has been created and verified locally; the per-app install step still references a placeholder path (`<path/to/package>`) since no installable package exists yet.
+Documented in `docs/development/setup.md`, `environment.md`, and `tools.md` (Conda + `pip-tools`, per-app `pip install -e`). Full setup, verified end-to-end:
 
-MVP-001 (the first executable MVP, see `docs/plans/001-first-traffic-simulator.plan.md`) is expected to require, on top of the above:
+```bash
+conda env create -f environment.yml && conda activate angelholm
+pip install -e apps/simulator
+```
 
-1. Adding `eclipse-sumo`, `traci`, and `sumolib` to `requirements.in` and recompiling
-   `requirements-lock.txt` (the SUMO simulation engine, investigated but not yet added).
-2. Access to OpenStreetMap data (verified reachable via the Overpass API).
-3. A licence-allowlist decision for SUMO's dual EPL-2.0/GPL-2.0-or-later licence, neither of
-   which is on the current `pip-licenses` allow-list — see the plan's Investigation section.
+`apps/simulator`'s own dependencies (SUMO) are declared in its `pyproject.toml` and already
+present in the shared `requirements-lock.txt`. The licence-allowlist decision (SUMO's dual
+`EPL-2.0 OR GPL-2.0-or-later`) was approved by the project owner and recorded in
+`docs/standards/dependencies.md`.
 
 ### Running Tests
 
-No automated test suite currently exists — there is no source code to test. Test **tooling** is configured (`pytest.ini`, `[tool.coverage]` in `pyproject.toml`) but:
+```bash
+pytest -q                                    # 22 tests, ~0.2s
+pytest -q --cov --cov-report=term-missing    # 99% coverage on apps/simulator
+```
 
-* `testpaths` and `coverage.run.source` are unresolved placeholders.
-* The coverage floor (`fail_under = 50`) is explicitly marked in `pyproject.toml` as a placeholder, not a measured baseline — per `docs/standards/testing.md`, a real floor must be set just below an actual measured value once code exists.
-* `pytest.ini` registers a `quarantine` marker for flaky tests (policy documented in `docs/standards/testing.md`), unused so far.
+All 22 tests are mocked/deterministic (no live network, no live SUMO invocation), per
+`docs/standards/testing.md`'s "must be deterministic and runnable offline". The coverage
+floor (`fail_under = 95` in `pyproject.toml`) is a real, measured baseline — set once
+`apps/simulator` was functionally complete, not mid-build (`ADR-004`, `GAP-D1-COVERAGE`
+closed). `pytest.ini`'s `quarantine` marker for flaky tests remains unused so far — no test
+has needed it.
 
 ### Development Workflow
 
@@ -255,9 +279,14 @@ Documented in `docs/standards/git.md`: feature branches off `main` (`feature/`, 
 * **`sast`** — Semgrep (`p/security-audit`, `p/owasp-top-ten`).
 * **`secret-scan`** — `detect-secrets-hook` against `.secrets.baseline`.
 * **`instruction-file-scan`** — runs `scripts/scan_instruction_files.py` against `AGENTS.md`/`CLAUDE.md`.
-* **`test`** — sets up the Conda environment, installs packages, then runs quarantined tests (non-blocking) followed by `pytest --cov`.
+* **`test`** — sets up the Conda environment, installs `apps/simulator`, then runs quarantined tests (non-blocking) followed by `pytest --cov`.
 
-Several steps still contain unresolved placeholders (per-package install paths, Semgrep's `<your-source-dirs>`, the licence scan's `<your-internal-package-names>`), so this pipeline would need those filled in — and a real, installable package to test — before it can run to a meaningful result.
+All placeholders are resolved now (`GAP-E2-CICHAIN`, closed MVP-001 Phase 2): `Run tests`
+installs `apps/simulator`, `SAST` scans `apps`, `Dependencies`' licence scan ignores
+`simulator` (internal, reports `UNKNOWN`). Verified locally (Ruff, `pytest --cov`) but
+**not yet confirmed green on a real GitHub Actions run** for the Semgrep/`pip-licenses`
+steps specifically — add the remaining 3 jobs as required status checks on the
+`main-protection` ruleset only after seeing them pass for real on a PR.
 
 `.github/workflows/dast.yml` is a separate, **manual-only** OWASP ZAP baseline scan (`workflow_dispatch`), not wired to any deploy and not a compliance gate — useful once a staging environment exists to point it at automatically.
 
@@ -271,21 +300,17 @@ No deployment target has been selected, and no `deploy/` directory exists. Initi
 
 ## Architectural Observations
 
-### The repository started as a generic skeleton, now bootstrapped
+### The repository started as a generic skeleton, now fully bootstrapped
 
 The repository was initialised from a generic, organisation-wide reference skeleton (the
 "grundplåt"; its bootstrap instructions lived in `_LÄS-MIG-FÖRST.md`, deleted once every
-step it described was carried out). Project-identity values (project name, Conda
-environment name, security contact) were resolved across `README.md`, `AGENTS.md`,
-`SECURITY.md`, `environment.yml`, `docs/development/setup.md`/`environment.md`,
-`.github/workflows/ci.yml`, and `docs/architecture/current-state.md`; a real,
-verified-not-drifted `requirements-lock.txt` now exists. What remains templated is exactly
-the set of placeholders that depend on an app or package actually existing (`pyproject.toml`,
-`pytest.ini`, `.env.example`, parts of `ci.yml` — see `docs/plans/001-first-traffic-simulator.plan.md`
-Phase 2, which resolves them) plus the methodology-compliance records
-(`docs/methodology-compliance/*`, still structure-only — tracked by
-`docs/mvp/000-workspace-foundation.md`). Treat any tooling/process claim from those
-still-templated files as aspirational until their placeholders are resolved.
+step it described was carried out, before either MVP began). All template placeholders
+that depended on a real app existing (`pyproject.toml`'s source roots, `pytest.ini`'s
+`testpaths`, `ci.yml`'s per-package install/scan steps) were resolved in MVP-001 Phase 2,
+once `apps/simulator` gave them something real to point at. The only placeholder left is
+`.env.example`'s per-service variables — genuinely nothing to name until a service that
+needs one exists. `docs/methodology-compliance/` holds a real baseline (not just
+structure) since MVP-000 Phase 3.
 
 ### Separate the City from the Traffic
 
@@ -341,7 +366,10 @@ The difference between the results is then measurable.
 
 Domain concepts such as people, journeys, scenarios and experiment results should not unnecessarily depend on SUMO-specific representations.
 
-SUMO is currently the strongest candidate simulation engine, but the project's own domain model should remain conceptually separate from it.
+SUMO is now the chosen engine (`ADR-006`), not just a candidate — `apps/simulator`'s own
+domain model (`network.py`, `traffic.py`, `simulate.py`) wraps it via `subprocess`/file I/O
+rather than importing SUMO-specific types directly into a shared domain layer, keeping the
+separation this principle asks for.
 
 ### Prefer Existing Capabilities
 
@@ -396,19 +424,22 @@ The project is new and several important questions remain intentionally open, at
 
 ### Workspace bootstrap (skeleton → real project)
 
-* Project-identity placeholders (project name, Conda environment name, security contact) have been resolved across `README.md`, `AGENTS.md`, `SECURITY.md`, `environment.yml`, `docs/development/setup.md`/`environment.md`, `.github/workflows/ci.yml`, and `docs/architecture/current-state.md`.
-* Placeholders that depend on an app or package actually existing — `pyproject.toml` (`<your_package_1>` source roots), `pytest.ini` (`testpaths`), `.github/workflows/ci.yml` (per-package install steps, Semgrep's `<your-source-dirs>`, the licence scan's `<your-internal-package-names>`), `.env.example` (per-service variables) — are deliberately still unresolved: there is nothing real to name yet. `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 resolves them when the first app is created.
+* All project-identity and app-dependent placeholders are resolved (see "The repository
+  started as a generic skeleton, now fully bootstrapped" above) — only `.env.example`'s
+  per-service variables remain, with nothing real to name yet.
 * `_LÄS-MIG-FÖRST.md`'s bootstrap steps are all complete and the file has been deleted, per its own instruction.
 * A full per-chapter (`a-…` through `f-…`) `docs/methodology-compliance/` assessment does not exist yet — only the `interpretations.md`/`gap-register.md` baseline from MVP-000 Phase 3 (see above). Tracked as `GAP-CHAPTERASSESS`.
-* `docs/development/repo-settings.md`'s owner checklist is mostly applied (branch protection, Dependabot alerts, automated security fixes — `GAP-D2-BRANCHPROTECT` closed 2026-09-16). What remains: 3 more required status checks once `GAP-E2-CICHAIN` closes, `CODEOWNERS` + raising required approvals to 1 once a second reviewer exists.
-* 3 of `ci.yml`'s 6 CI jobs (SAST, Dependencies, Run tests) fail on every run — not real findings, but a shell syntax error from literal `<placeholder>` text still in the workflow file. Confirmed on PR #1's real run (`GAP-E2-CICHAIN`); resolved by `docs/plans/001-first-traffic-simulator.plan.md` Phase 2.
-* Five ADRs now exist (`docs/architecture/decisions/`) recording the decisions already in force (methodology adoption, Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer) — all marked **Proposed**, not yet formally reviewed/accepted.
+* `docs/development/repo-settings.md`'s owner checklist is mostly applied (branch protection, Dependabot alerts, automated security fixes — `GAP-D2-BRANCHPROTECT` closed 2026-09-16). What remains: 3 more required status checks once the fix for `GAP-E2-CICHAIN` is confirmed green on a real GitHub Actions run, `CODEOWNERS` + raising required approvals to 1 once a second reviewer exists.
+* `GAP-E2-CICHAIN` (3 of `ci.yml`'s 6 jobs failing on placeholder text) is **closed** — fixed in MVP-001 Phase 2. Verified locally; not yet confirmed green on a real GitHub Actions run.
+* Six ADRs now exist (`docs/architecture/decisions/`) recording the decisions already in force (methodology adoption, Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer, SUMO+OpenStreetMap) — all marked **Proposed**, not yet formally reviewed/accepted.
 
 ### Domain / product
 
-* Exact integration approach between Python and SUMO.
-* How OpenStreetMap data should be downloaded, processed and versioned.
-* Geographic scope and size of the first simulation area.
+Resolved by MVP-001, not open anymore: Python↔SUMO integration (`subprocess` wrapper
+modules — `network.py`/`traffic.py`/`simulate.py`), how OSM data is fetched (SUMO's own
+`osmGet.py`, committed as a fixture), and the first simulation area's scope (a small,
+verified bbox in central Ängelholm — `ADR-006`). Still open:
+
 * Representation of people and households.
 * Generation of realistic origins and destinations.
 * Generation of realistic travel demand.

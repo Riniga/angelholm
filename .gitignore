@@ -18,6 +18,13 @@ reports/
 # Example:
 # apps/<app-1>/runs/
 
+# apps/simulator: routes and the .sumocfg are cheap, deterministic outputs of our own code
+# (fixed seed) run against the already-committed network — regenerated on demand, not
+# committed (unlike the network/OSM extract, which need a live Overpass fetch to rebuild).
+apps/simulator/data/*.rou.xml
+apps/simulator/data/*.sumocfg
+apps/simulator/data/*.trips.xml
+
 # IDE
 .vscode/
 .idea/

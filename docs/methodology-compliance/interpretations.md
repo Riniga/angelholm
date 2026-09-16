@@ -52,14 +52,15 @@ identified.
 **Chapter:** [D1 – Testning](../methodology/d-kvalitetssakring/testning.md) (SKA 1–2, BÖR 1).
 
 **Decision:** **Coverage enforced as a ratchet, repo-wide, not per-package** — see
-[ADR-004](../architecture/decisions/ADR-004-coverage-as-a-ratchet.md). This records the
-*policy shape* only: `pyproject.toml`'s `fail_under = 50` remains an explicit placeholder,
-not a measured baseline, because no application code exists yet to measure — setting the
-real number is deferred to MVP-001, which is the first MVP to produce testable code.
-Tracked as `GAP-D1-COVERAGE` in the gap register until then.
+[ADR-004](../architecture/decisions/ADR-004-coverage-as-a-ratchet.md). Real baseline
+measured 2026-09-16 (`pytest -q --cov`, `apps/simulator` after MVP-001's Phases 1–4):
+**99.13%** — only uncovered line is `run.py`'s `__main__` guard, reasonably left uncovered
+per `docs/standards/coding.md`. Floor set to **95%**, just below the measured value, not at
+99 itself — leaves room for normal, non-regressive coverage fluctuation as more code is
+added, while still catching a real drop. `GAP-D1-COVERAGE` closed.
 
-**Follow-up:** `docs/plans/001-first-traffic-simulator.plan.md` — measure a real baseline
-once code exists and set the floor just below it, per ADR-004.
+**Follow-up:** None needed for now — raise the floor in a future, deliberate PR as the
+codebase matures, per the ratchet policy (never lowered to make a failing build pass).
 
 ---
 
