@@ -31,7 +31,7 @@ conda activate angelholm
 winget install Git.Git
 Create SSH Key: ssh-keygen -t ed25519 -C "Key description"
 Add SSH Key to Github: User->Settings->SSH and GPG keys (https://github.com/settings/keys)
-git clone \<your-repo-ssh-url\>
+git clone git@github.com:Riniga/angelholm.git
 
 ## Nästa steg — miljö och verktyg
 

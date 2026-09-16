@@ -59,11 +59,11 @@ in parallel — see this repo's own `.github/workflows/ci.yml` for the pattern.
 
 ```bash
 # inspect the current ruleset
-gh api repos/<owner>/<repo>/rulesets
-gh api repos/<owner>/<repo>/rulesets/<ruleset-id>
+gh api repos/Riniga/angelholm/rulesets
+gh api repos/Riniga/angelholm/rulesets/<ruleset-id>
 
 # a classic branch-protection alternative
-gh api -X PUT repos/<owner>/<repo>/branches/main/protection \
+gh api -X PUT repos/Riniga/angelholm/branches/main/protection \
   -H "Accept: application/vnd.github+json" \
   -f 'required_pull_request_reviews[required_approving_review_count]=1' \
   -F 'required_pull_request_reviews[dismiss_stale_reviews]=true' \

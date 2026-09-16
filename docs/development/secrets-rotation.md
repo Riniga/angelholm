@@ -59,7 +59,7 @@ verification step.**
      --parameters '{
        "name": "github-actions-main",
        "issuer": "https://token.actions.githubusercontent.com",
-       "subject": "repo:<owner>/<repo>:ref:refs/heads/main",
+       "subject": "repo:Riniga/angelholm:ref:refs/heads/main",
        "audiences": ["api://AzureADTokenExchange"]
      }'
    ```
