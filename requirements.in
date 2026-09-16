@@ -19,13 +19,14 @@
 # packages for the same requirements.in (see the example comment below); if CI's drift
 # check fails after a local Windows edit, trust CI's diff over your own local output.
 
-# Example of the platform-conditional-package gotcha this project hit twice (colorama via
-# tqdm's Windows-only marker; tzdata via a pandas version that needed it on Windows but not
-# Linux): when a package silently differs between a local Windows compile and CI's Linux
-# compile, pin it here explicitly and unconditionally rather than letting a transitive
-# marker decide it per platform. Delete this comment and the example line below once you
-# have real dependencies and have hit (or ruled out) the same issue yourself.
-# example-transitive-package==1.2.3
+# Platform-conditional-package gotcha, hit for real (MVP-001 PR #3's CI, not a guess):
+# `pytest` declares `colorama>=0.4 ; sys_platform == "win32"`. Compiling this file on
+# Windows resolved that marker true and included colorama; CI's own Linux recompile
+# resolves it false and drops it — a real diff, not a hash-ordering false alarm (see
+# MVP-000/001's close-out notes for that separate, harmless kind of noise). Pinned
+# explicitly and unconditionally below so both platforms agree, per this file's own
+# standing guidance above.
+colorama==0.4.6
 
 # Ruff is pinned exactly — its formatter/lint output changes between minor versions. Keep
 # it on the same version as `rev` in .pre-commit-config.yaml.
