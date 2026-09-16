@@ -2,7 +2,7 @@
 
 Reference: [`docs/mvp/001-first-traffic-simulator.md`](../mvp/001-first-traffic-simulator.md)
 
-**Status:** Not started — TODOs are written, none executed yet.
+**Status:** In progress — Phase 1 complete.
 
 ## 0. Investigation
 
@@ -78,22 +78,27 @@ intervention or errors — matching every acceptance criterion in
 
 ### Phase 1: Add the SUMO toolchain as a dependency
 
-- [ ] Add `eclipse-sumo`, `traci`, `sumolib` (pinned to the same verified `1.27.1`-compatible
-  range) to `requirements.in`.
-- [ ] Recompile `requirements-lock.txt`
-  (`pip-compile --generate-hashes --no-annotate --no-header
-  --output-file=requirements-lock.txt requirements.in`) and commit both files.
-- [ ] Verify inside the `angelholm` env: `python -m sumo --version` (or the installed
-  console script), `python -c "import traci, sumolib"`, and that `netconvert`/
-  `randomTrips.py` are reachable (as scripts inside the installed package, not
-  necessarily on `PATH` — confirm the actual invocation path during this step, don't
-  assume `PATH` placement).
-- [ ] **Raise the licence-allowlist gap with the user before this phase is considered
-  done** — do not silently add an unreviewed licence to `docs/standards/dependencies.md`'s
-  allow-list.
-- [ ] Write ADR: "Use SUMO (`eclipse-sumo`) as the mobility simulation engine and
-  OpenStreetMap/Overpass as the geographic data source" — include the conda-forge
-  name-collision finding as context for future readers.
+- [x] Add `eclipse-sumo`, `traci`, `sumolib` (pinned to the same verified `1.27.1`-compatible
+  range) to `requirements.in`. Result: `sumo-data==1.27.1` was also pulled in automatically
+  as a transitive dependency (bundled default templates) — not something to pin separately.
+- [x] Recompile `requirements-lock.txt` and commit both files. Result: verified no real
+  drift via a proper per-package hash-set comparison (order-independent) before and after —
+  same lesson as MVP-000's close-out, `pip-compile`'s hash-line order isn't stable.
+- [x] Verify inside the `angelholm` env. Result: `sumo --version` →
+  `Eclipse SUMO sumo 1.27.1` (copyright DLR); `netconvert --version` works; both are real
+  console scripts on the env's `Scripts/` dir (`sumo.exe`, `sumo-gui.exe`,
+  `netconvert.exe`, `duarouter.exe`), directly callable, not requiring a `python -m`
+  invocation. `randomTrips.py` is at
+  `Lib/site-packages/sumo/tools/randomTrips.py` (a script, not a console entry point —
+  invoke via `python <path>`). `import traci, sumolib` succeeds.
+- [x] Raise the licence-allowlist gap with the user before this phase is considered done.
+  Result: approved by the project owner 2026-09-16. Added the exact string `pip-licenses`
+  reports (`EPL-2.0 OR GPL-2.0-or-later`, verified for real, not guessed) to `ci.yml`'s
+  allow-list and to `docs/standards/dependencies.md`, which — while here — was also
+  upgraded from a still-unfilled template list to the real, actual allow-list `ci.yml`
+  already enforced.
+- [x] Write ADR-006: SUMO + OpenStreetMap as the simulation engine and geographic data
+  source, including the conda-forge name-collision finding as context.
 
 ### Phase 2: Create the simulator app skeleton
 

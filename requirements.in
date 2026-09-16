@@ -31,3 +31,15 @@
 # it on the same version as `rev` in .pre-commit-config.yaml.
 ruff==0.16.7
 pre-commit>=3,<5
+
+# SUMO mobility simulation engine (MVP-001 — see docs/plans/001-first-traffic-simulator.plan.md
+# and ADR-006). Pinned exactly, all three at the same version deliberately: `traci`/`sumolib`
+# are thin Python APIs over the `eclipse-sumo` binaries and must match the engine version they
+# talk to, not just satisfy a loose range. Note the real PyPI name is `eclipse-sumo` —
+# conda-forge's own package literally called `sumo` is an unrelated, different project
+# (ab-initio solid-state-physics plotting tools); do not install that one.
+# Licence: dual EPL-2.0/GPL-2.0-or-later — approved by the project owner 2026-09-16, see
+# docs/standards/dependencies.md's allow-list.
+eclipse-sumo==1.27.1
+traci==1.27.1
+sumolib==1.27.1
