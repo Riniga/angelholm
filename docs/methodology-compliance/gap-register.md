@@ -16,10 +16,16 @@ follow-up plans progress, and struck through (`~~GAP-ID~~`) when closed.
      first thing anyone (human or AI) should read to understand what's already done before
      starting new work on this area. -->
 
+- **2026-09-16** — MVP-000 Phase 4: applied via `gh api` — branch-protection ruleset
+  `main-protection` (id `23560670`) on `main`, Dependabot vulnerability alerts, and
+  automated security fixes. Closes `GAP-D2-BRANCHPROTECT` (required-approval-count
+  deviation tracked as `EX-001`, not a failure). Correction to the entry below: Dependabot
+  **vulnerability alerts** and **automated security fixes** were actually disabled before
+  today — only `.github/dependabot.yml`'s separate, file-driven **version-update** feature
+  (C2 SKA 5) was already working (confirmed by PR #1's real `ruff` bump). Conflating the two
+  was this register's own first mistake, caught and fixed the same day.
 - **2026-09-16** — MVP-000 Phase 3: first baseline established (this register was empty
-  before). All rows below are newly opened, none closed yet. Confirmed *not* a gap while
-  assessing: Dependabot alerts/version-update PRs are live and working (PR #1 bumped `ruff`
-  and was merged) — C2 SKA 2/5 already functioning in practice, no row needed.
+  before). All rows below were newly opened.
 
 ## Legend
 
@@ -40,8 +46,8 @@ follow-up plans progress, and struck through (`~~GAP-ID~~`) when closed.
 
 | ID | Chapter | Gap | Owner | Follow-up | Status |
 |----|---------|-----|-------|-----------|--------|
-| `GAP-D2-BRANCHPROTECT` | D2 / F1 | Branch protection on `main` not yet applied — required PR review, required status checks, and "no bypass" are currently just written policy (`AGENTS.md`, `docs/standards/git.md`), not a technical guardrail. An admin or bot token could push directly to `main` today. | owner | `docs/plans/000-workspace-foundation.plan.md` Phase 4 | open |
-| `GAP-E2-CICHAIN` | E2 | 3 of `ci.yml`'s 6 jobs (SAST, Dependencies, Run tests) fail on every run with a shell syntax error, not a real finding — they still pass literal `<placeholder>` text (`<your-source-dirs>`, `<your-internal-package-names>`, `<path/to/package>`) as command arguments, which bash parses as I/O redirection. Confirmed for real on PR #1 (the Dependabot `ruff` bump): Semgrep/`pip-licenses`/`pip install` never actually ran. | platform | `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 | open |
+| ~~`GAP-D2-BRANCHPROTECT`~~ | D2 / F1 | ~~Branch protection on `main` not yet applied~~ — **closed 2026-09-16**: ruleset `main-protection` (id `23560670`) applied, bypass list empty, `current_user_can_bypass: "never"`. Required-approval-count is `0` not `1` — documented as `EX-001`, not a failure of this gap. Only 3 of 6 CI jobs are required status checks (the other 3 wait on `GAP-E2-CICHAIN`, tracked there, not here). | owner | `docs/plans/000-workspace-foundation.plan.md` Phase 4 | closed |
+| `GAP-E2-CICHAIN` | E2 | 3 of `ci.yml`'s 6 jobs (SAST, Dependencies, Run tests) fail on every run with a shell syntax error, not a real finding — they still pass literal `<placeholder>` text (`<your-source-dirs>`, `<your-internal-package-names>`, `<path/to/package>`) as command arguments, which bash parses as I/O redirection. Confirmed for real on PR #1 (the Dependabot `ruff` bump): Semgrep/`pip-licenses`/`pip install` never actually ran. Also blocks adding the remaining 3 required status checks to the `main-protection` ruleset (see `GAP-D2-BRANCHPROTECT`). | platform | `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 | open |
 | `GAP-D1-COVERAGE` | D1 | No functioning coverage gate — `pyproject.toml`'s `fail_under = 50` is an explicit placeholder, not a value derived from a measured baseline, because no application code exists yet to measure. Policy shape already decided (ADR-004); only the number is missing. | platform | `docs/plans/001-first-traffic-simulator.plan.md` (measure once real code exists) | open |
 
 ### Severity M

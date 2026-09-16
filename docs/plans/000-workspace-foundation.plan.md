@@ -96,13 +96,21 @@ is a tracked gap; and `_LÄS-MIG-FÖRST.md` is gone.
 
 ### Phase 4: Apply or track repository settings
 
-- [ ] Confirm a real GitHub remote/repository exists (prerequisite — see Investigation).
-- [ ] Apply `docs/development/repo-settings.md`'s branch-protection ruleset and required
-  status checks, or hand this off explicitly to the repo owner if it needs access this
-  session doesn't have.
-- [ ] Record the applied ruleset id/date in `repo-settings.md`, or add a gap-register row for
-  anything left unapplied.
-- [ ] Enable Dependabot alerts + automated security fixes (repository setting, not a file).
+- [x] Confirm a real GitHub remote/repository exists (prerequisite — see Investigation).
+  Result: `gh auth status` confirmed authenticated as `Riniga` with `repo` scope — this
+  session *did* have the access assumed unavailable when the plan was first written.
+- [x] Apply `docs/development/repo-settings.md`'s branch-protection ruleset and required
+  status checks. Result: ruleset `main-protection` (id `23560670`) applied via `gh api`,
+  requiring only the 3 currently-passing CI jobs (`Ruff`, `Instruction file scan`, `Secret
+  scan`) — not all 6, since `GAP-E2-CICHAIN` means the other 3 fail unconditionally right
+  now and would make the ruleset self-blocking.
+- [x] Record the applied ruleset id/date in `repo-settings.md`. Result: also discovered and
+  fixed an unrelated correctness issue while verifying — an earlier gap-register changelog
+  entry (Phase 3) had wrongly claimed Dependabot vulnerability alerts were already working,
+  conflating them with the separate, file-driven version-update feature. Corrected.
+- [x] Enable Dependabot alerts + automated security fixes. Result: both were actually
+  **disabled** (verified via `gh api`, not assumed) — enabled now, confirmed via a second
+  `gh api` read after the `PUT`.
 
 ### Phase 5: Close out the bootstrap
 
