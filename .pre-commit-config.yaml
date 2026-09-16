@@ -1,7 +1,7 @@
 # Local pre-commit hooks. Install once: `pre-commit install`.
 #
-# Ruff is the formatter and linter (ADR-018) — keep the `rev` below on the SAME version as
-# `ruff==...` in environment.yml; they must move together.
+# Ruff is the formatter and linter (ADR-002) — keep the `rev` below on the SAME version as
+# `ruff==...` in requirements.in; they must move together.
 #
 # Scope note: this config enforces what 023-P2 enforces — Python format + lint, plus cheap
 # file validators. Repo-wide hygiene (final newlines / trailing whitespace on docs) is a
@@ -24,6 +24,11 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
+        # Default is 500 KB; MVP-001's committed OpenStreetMap data fixture
+        # (apps/simulator/data/angelholm_bbox.osm.xml, 547 KB) is a real, reviewed
+        # exception — raised modestly, not removed, so this still catches a genuinely
+        # oversized accidental commit elsewhere.
+        args: ['--maxkb=600']
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

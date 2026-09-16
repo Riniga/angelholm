@@ -122,14 +122,20 @@ intervention or errors — matching every acceptance criterion in
 
 ### Phase 3: Fetch OSM data and build the routable network
 
-- [ ] Script the Overpass fetch for the verified bbox (`56.2430,12.8580,56.2470,12.8660`),
-  saving raw OSM XML under `apps/simulator/data/` — decide, and record the decision, whether
-  to commit this extract as a fixture (reproducibility, per the "Scenarios Should Be
-  Reproducible" principle in `overview.md`) or re-fetch live each run (freshness, but
-  network-dependent); default recommendation is to commit a small snapshot.
-- [ ] Run `netconvert --osm-files <file> -o network.net.xml`; verify a clean exit code and
-  no unhandled warnings.
-- [ ] Sanity-check the resulting network (edge/junction count > 0, loads back via `sumolib`).
+- [x] Script the Overpass fetch for the verified bbox. Result: used SUMO's own official
+  `osmGet.py` tool (not a hand-rolled query) via `simulator.network.fetch_osm_extract()`.
+  **Decision: commit the extract as a fixture** (`apps/simulator/data/angelholm_bbox.osm.xml`,
+  547 KB) — per the plan's default recommendation and "Scenarios Should Be Reproducible".
+  Real, non-obvious finding: the public Overpass server returned a genuine `HTTP 504
+  Gateway Timeout` on the first attempt — added `--retries 5 --retry-delay 10` to the
+  function as a result, not just a one-off manual retry.
+- [x] Run `netconvert --osm-files <file> -o network.net.xml` via
+  `simulator.network.build_network()`. Result: clean exit (`Success.`), 379 KB network.
+  Real warnings appeared (unrelated PT-line/waterway edge cases from data extending past
+  the small bbox) — expected and handled gracefully by `netconvert` itself, not a road
+  network problem; not worth suppressing or treating as a failure.
+- [x] Sanity-check the resulting network. Result: loads via `sumolib.net.readNet` — **241
+  edges, 120 junctions**, both `> 0`, confirmed for real.
 
 ### Phase 4: Generate traffic and run the simulation
 
