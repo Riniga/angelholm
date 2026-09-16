@@ -1,0 +1,34 @@
+"""Run a SUMO simulation from a `.sumocfg`."""
+
+from __future__ import annotations
+
+import logging
+import subprocess
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+class SimulationError(RuntimeError):
+    """Raised when running the SUMO simulation fails."""
+
+
+def run_headless(config_path: Path) -> None:
+    """Run the simulation headlessly (`sumo -c <config>`) to completion.
+
+    Raises `SimulationError` if the simulation exits non-zero — the automatable half of
+    MVP-001's acceptance criteria. Visual verification via `sumo-gui` is a separate, manual
+    step this function does not attempt.
+    """
+    logger.info("Running headless simulation: %s", config_path)
+    result = subprocess.run(
+        ["sumo", "-c", str(config_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise SimulationError(
+            f"sumo failed (exit {result.returncode}): {result.stderr.strip()}"
+        )
+    logger.info("Simulation completed successfully")

@@ -139,14 +139,27 @@ intervention or errors — matching every acceptance criterion in
 
 ### Phase 4: Generate traffic and run the simulation
 
-- [ ] Use `randomTrips.py` (or `sumolib`/`traci` directly) to generate ≥ 10 random vehicle
-  trips over the network.
-- [ ] Write a `.sumocfg` tying the network and routes together.
-- [ ] Verify headless `sumo -c <config>` runs to completion with no errors — this is the
-  one part of the acceptance criteria that can be automated/checked programmatically.
-- [ ] **Manual step, needs the user**: open the same config in `sumo-gui` and confirm the
-  network and moving vehicles are visible — cannot be verified from this session (no
-  display).
+- [x] Use `randomTrips.py` to generate ≥ 10 random vehicle trips over the network, via
+  `simulator.traffic.generate_traffic()`. Result: **14 vehicles** for real (fixed
+  `seed=42`, reproducible). Found and fixed a real bug along the way: without an explicit
+  `-o`, `randomTrips.py` drops an intermediate `trips.trips.xml` in the *current working
+  directory*, not next to the route file — it leaked to the repo root on the first run.
+  Pinned explicitly now.
+- [x] Write a `.sumocfg` tying the network and routes together, via
+  `simulator.traffic.write_sumocfg()` — paths written relative to the config file, tested
+  for both same-directory and cross-directory placement.
+- [x] Verify headless `sumo -c <config>` runs to completion with no errors, via
+  `simulator.simulate.run_headless()`. Result: ran for real — **"Simulation completed
+  successfully."**
+- [ ] **Manual step, needs the user**: open `apps/simulator/data/angelholm.sumocfg` in
+  `sumo-gui` and confirm the network and moving vehicles are visible — cannot be verified
+  from this session (no display). The route/config files are regenerated on demand (not
+  committed — see `.gitignore`), currently present on disk from this session's real run.
+
+Also decided: `.rou.xml`/`.sumocfg` are cheap, deterministic outputs of our own code run
+against the already-committed network (fixed seed) — unlike the OSM extract, not worth
+committing as static fixtures. Added to `.gitignore` instead; Phase 5's entrypoint
+regenerates them each run.
 
 ### Phase 5: Wire up a repeatable start command and update docs
 
