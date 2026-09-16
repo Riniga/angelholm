@@ -14,6 +14,10 @@ MIN_VEHICLES = 10
 DEFAULT_BEGIN = 0
 DEFAULT_END = 200
 DEFAULT_PERIOD = 15.0
+# sumo-gui runs a simulation step as fast as it can by default — 200 simulated seconds
+# finishes in a couple of real seconds, too fast to actually watch. 200ms/step spreads
+# that over ~40 real seconds instead. Ignored entirely by headless `sumo` (gui_only).
+DEFAULT_DELAY_MS = 200
 # Fixed, not random — matches the "Scenarios Should Be Reproducible" architectural
 # principle (docs/architecture/overview.md): the same inputs must produce the same traffic.
 DEFAULT_SEED = 42
@@ -100,11 +104,15 @@ def write_sumocfg(
     *,
     begin: int = DEFAULT_BEGIN,
     end: int = DEFAULT_END,
+    delay_ms: int = DEFAULT_DELAY_MS,
 ) -> Path:
     """Write a `.sumocfg` tying `net_file` and `route_file` together.
 
     Paths are written relative to `config_path`'s own directory, since that's how SUMO
     resolves them at run time — the three files don't have to live in the same directory.
+    `delay_ms` sets `sumo-gui`'s default per-step animation delay so a human can actually
+    watch it run; headless `sumo` (used by `run_headless()`) ignores this `<gui_only>`
+    setting entirely, so it has no effect on the automated acceptance check.
     """
     config_path.parent.mkdir(parents=True, exist_ok=True)
     net_rel = os.path.relpath(net_file, start=config_path.parent)
@@ -120,6 +128,9 @@ def write_sumocfg(
         <begin value="{begin}"/>
         <end value="{end}"/>
     </time>
+    <gui_only>
+        <delay value="{delay_ms}"/>
+    </gui_only>
 </configuration>
 """,
         encoding="utf-8",

@@ -79,7 +79,9 @@ class TestWriteSumocfg:
         route_file = tmp_path / "routes.rou.xml"
         config_path = tmp_path / "sim.sumocfg"
 
-        result = write_sumocfg(net_file, route_file, config_path, begin=0, end=200)
+        result = write_sumocfg(
+            net_file, route_file, config_path, begin=0, end=200, delay_ms=200
+        )
 
         assert result == config_path
         content = config_path.read_text(encoding="utf-8")
@@ -87,6 +89,7 @@ class TestWriteSumocfg:
         assert 'route-files value="routes.rou.xml"' in content
         assert 'begin value="0"' in content
         assert 'end value="200"' in content
+        assert 'delay value="200"' in content
 
     def test_paths_relative_to_config_in_different_directory(
         self, tmp_path: Path
