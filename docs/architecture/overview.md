@@ -190,7 +190,7 @@ None of these are declared in any dependency file yet.
 Unlike the runtime layer, the **tooling** dependency surface is already scaffolded, though not yet exercised against real code:
 
 * `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, which **has been generated and verified not to have drifted** from `requirements.in`.
-* `requirements.in` — source ranges for the pip-compiled lock: `ruff==0.16.6` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step) and `pre-commit>=3,<5`.
+* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps) and `pre-commit>=3,<5`.
 * `pyproject.toml` — `[tool.ruff]` (formatter/linter config) and `[tool.coverage]` (coverage gate); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. Source roots (`src`, `known-first-party`) and the coverage `source` list are still placeholders (`<your_package_1>`, etc.).
 * `pytest.ini` — `testpaths` still points at placeholder paths (`<path/to/package_1/tests>`); no real package exists to point at yet.
 * `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files`, and `detect-secrets`.

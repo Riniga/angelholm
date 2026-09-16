@@ -15,4 +15,8 @@ mellan dem. Se [`docs/standards/documentation.md`](../../standards/documentation
 
 | ADR | Beslut |
 |-----|--------|
-<!-- One row per ADR, in numeric order. Add a row when you write ADR-001. -->
+| [ADR-001](ADR-001-adopt-projektets-utvecklingsmetodik.md) | Adopt Projektets utvecklingsmetodik as this project's methodology baseline |
+| [ADR-002](ADR-002-ruff-as-formatter-and-linter.md) | Use Ruff as the formatter and linter |
+| [ADR-003](ADR-003-pip-compile-for-dependency-locking.md) | Use pip-compile for dependency locking |
+| [ADR-004](ADR-004-coverage-as-a-ratchet.md) | Enforce test coverage as a ratchet, not a fixed target |
+| [ADR-005](ADR-005-no-ai-commit-trailer.md) | No AI co-author trailer in commit messages |

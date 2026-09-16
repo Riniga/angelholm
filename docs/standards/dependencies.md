@@ -29,9 +29,9 @@ dependencies.
   output — the actual, hash-pinned versions installed.
 - `environment.yml`'s `pip:` block is just `-r requirements-lock.txt`; do not add packages
   there directly — add them to `requirements.in` and recompile.
-- Genuinely Conda-native packages are pinned exactly in `environment.yml` itself (same
-  pattern as `ruff==0.16.6`) — not part of the pip lock. Keep this list as short as
-  possible; most things belong in the pip lock instead.
+- Genuinely Conda-native packages are pinned exactly in `environment.yml` itself (e.g.
+  `python=3.13`) — not part of the pip lock. Keep this list as short as possible; most
+  things, including `ruff`, belong in the pip lock (`requirements.in`) instead.
 - **To update a dependency:** edit its range in `requirements.in`, run
   `pip-compile --generate-hashes --no-annotate --no-header --output-file=requirements-lock.txt requirements.in`, and commit
   both files together. CI fails if `requirements-lock.txt` doesn't match what

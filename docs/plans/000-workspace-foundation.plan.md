@@ -56,23 +56,31 @@ is a tracked gap; and `_LÄS-MIG-FÖRST.md` is gone.
 
 - [x] Generate `requirements-lock.txt` with the correct `--output-file` flag.
   Result: also found and fixed the missing-flag bug in 5 files (see Investigation).
-- [ ] User confirms `conda env create -f environment.yml && conda activate angelholm`
+- [x] User confirms `conda env create -f environment.yml && conda activate angelholm`
   succeeds end-to-end, and `ruff --version` / `pytest --version` / `pre-commit --version`
-  all resolve inside it. *(Needs the repo owner — `conda` isn't on this session's own PATH.)*
-- [ ] Commit `requirements-lock.txt` together with the doc fixes.
+  all resolve inside it.
+- [x] Commit `requirements-lock.txt` together with the doc fixes.
+  Result: also caught and fixed a follow-on desync — a merged Dependabot PR bumped `ruff`
+  to `0.16.7` in `requirements.in`/lock but left `.pre-commit-config.yaml` and `ci.yml` on
+  `0.16.6`; fixed as a separate prerequisite commit before Phase 2 started.
 
 ### Phase 2: Record the decisions already in force as ADRs
 
-- [ ] ADR: Ruff as the formatter/linter (cites `pyproject.toml`'s own comment asking for
-  this).
-- [ ] ADR: `pip-compile` as the dependency-lock mechanism — include the `--output-file`
+- [x] ADR: Ruff as the formatter/linter (cites `pyproject.toml`'s own comment asking for
+  this). → `docs/architecture/decisions/ADR-002-ruff-as-formatter-and-linter.md`.
+- [x] ADR: `pip-compile` as the dependency-lock mechanism — include the `--output-file`
   lesson from Phase 1's investigation as context, so the next person doesn't repeat it.
-- [ ] ADR: coverage-ratchet testing-policy shape (repo-wide floor, raised only deliberately;
-  see `docs/standards/testing.md` "Coverage").
-- [ ] ADR: no AI commit-trailer, AI assistance recorded via PR checkbox instead (already
-  decided per `docs/standards/git.md`, just not yet an ADR).
-- [ ] ADR: adopting Projektets utvecklingsmetodik as this project's methodology baseline.
-- [ ] Add all five to `docs/architecture/decisions/README.md`'s index.
+  → `ADR-003-pip-compile-for-dependency-locking.md`.
+- [x] ADR: coverage-ratchet testing-policy shape (repo-wide floor, raised only deliberately;
+  see `docs/standards/testing.md` "Coverage"). → `ADR-004-coverage-as-a-ratchet.md`.
+- [x] ADR: no AI commit-trailer, AI assistance recorded via PR checkbox instead (already
+  decided per `docs/standards/git.md`, just not yet an ADR). → `ADR-005-no-ai-commit-trailer.md`.
+- [x] ADR: adopting Projektets utvecklingsmetodik as this project's methodology baseline.
+  → `ADR-001-adopt-projektets-utvecklingsmetodik.md`.
+- [x] Add all five to `docs/architecture/decisions/README.md`'s index.
+  All five marked **Proposed**, not Accepted — per this plan's own Risk note, they need a
+  real human review before being considered accepted, not just auto-approval because an AI
+  drafted them. Update each Status line to Accepted once reviewed.
 
 ### Phase 3: Write the first methodology-compliance baseline
 
