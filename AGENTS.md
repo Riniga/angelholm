@@ -15,13 +15,12 @@ actually recurs, and **link** shared rules rather than copying them.
 A single workspace for the Ängelholm urban mobility simulation project — modelling traffic
 and mobility in Ängelholm to run controlled, reproducible infrastructure "what-if"
 experiments (see [`docs/vision.md`](docs/vision.md)). It grows one MVP at a time
-(`docs/roadmap.md`). The repository is currently in its bootstrap phase: no `apps/` or
-`packages/` exist yet — see [`docs/architecture/overview.md`](docs/architecture/overview.md)
+(`docs/roadmap.md`) — see [`docs/architecture/overview.md`](docs/architecture/overview.md)
 for the current state and the planned structure.
 
 | Area | Location |
 |------|----------|
-| Applications | `apps/` — none yet; created as MVPs require them |
+| Applications | `apps/` — `simulator` (MVP-001, first traffic simulation) |
 | Shared code | `packages/<shared-package>/` (only code reused by ≥ 2 apps — record the boundary decision as an ADR) — none yet |
 | Roadmap / MVPs / plans | `docs/roadmap.md`, `docs/mvp/`, `docs/plans/` |
 | Architecture + ADRs | `docs/architecture/`, `docs/architecture/decisions/` |
@@ -161,13 +160,12 @@ Follow the standards docs — do not restate them here:
 ## Local commands
 
 ```bash
-# environment (see docs/development/environment.md) — no app/package exists yet to
-# `pip install -e`.
+# environment (see docs/development/environment.md)
 conda env create -f environment.yml && conda activate angelholm
+pip install -e apps/simulator
 
-# tests — from the repo root (no test suite exists yet; pytest.ini's testpaths are
-# placeholders until a real app/package exists)
+# tests — from the repo root
 pytest -q
 
-# no local-run command exists yet — add one here once the first app is created
+# no local-run command for the simulation itself exists yet — MVP-001 Phase 5 adds one
 ```

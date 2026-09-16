@@ -6,11 +6,9 @@ in the same PR as any change to an app's status, test count, or key capabilities
 
 ## Applications
 
-None yet. No `apps/` directory exists. The first application is expected with MVP-001
-(see `docs/roadmap.md`); add a row here once it exists.
-
 | App | Status | Tests | Key capabilities |
 |-----|--------|-------|-------------------|
+| `apps/simulator` | In progress (MVP-001) | 1 | Skeleton only so far (Phase 2) — SUMO/OpenStreetMap network build, traffic generation, and a runnable simulation land in Phases 3–5 |
 
 ## Shared packages
 
@@ -25,15 +23,17 @@ project-specific deviates from them yet.
 
 ## Dependencies
 
-No application runtime dependencies exist yet. The development-tooling dependency surface
-(Conda `angelholm` environment, Ruff, pytest, pre-commit) is already scaffolded — see
-`docs/architecture/overview.md` "Existing Dependencies" for the detail.
+`apps/simulator` depends on `eclipse-sumo`/`traci`/`sumolib` (SUMO, exactly pinned —
+`ADR-006`). The development-tooling dependency surface (Conda `angelholm` environment,
+Ruff, pytest, `pytest-cov`, pre-commit) is scaffolded — see `docs/architecture/overview.md`
+"Existing Dependencies" for the detail.
 
 ## Test counts
 
-No test suite exists yet — no application code to test. `pytest.ini` and the coverage
-config in `pyproject.toml` are in place but still reference placeholder paths until a real
-package exists.
+`apps/simulator`: 1 test (a package-importable smoke test, Phase 2). Coverage floor
+(`pyproject.toml`'s `fail_under = 50`) is still a placeholder — a real baseline is deferred
+to Phase 5, once the MVP is functionally complete (measuring it against today's trivial
+skeleton would be meaningless).
 
 ## Methodology compliance
 

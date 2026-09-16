@@ -102,16 +102,23 @@ intervention or errors — matching every acceptance criterion in
 
 ### Phase 2: Create the simulator app skeleton
 
-- [ ] Create `apps/simulator/` — first real app in the workspace (see
-  `docs/architecture/overview.md` "Planned Evolution").
-- [ ] Add a minimal `apps/simulator/pyproject.toml` (packaging metadata only, per
-  `AGENTS.md`'s `pip install -e apps/<app>` convention) and a `tests/` folder.
-- [ ] Resolve the long-standing placeholders this unblocks: `pyproject.toml`'s
-  `[tool.ruff] src` / `[tool.coverage.run] source`, `pytest.ini`'s `testpaths` — point them
-  at the real `apps/simulator` paths instead of `<your_package_1>` etc.
-- [ ] Update `AGENTS.md`'s "Applications" table and "Local commands" block, `README.md`'s
-  workspace-structure note, and `docs/architecture/current-state.md`'s Applications table —
-  all currently say "none yet."
+- [x] Create `apps/simulator/` — first real app in the workspace (src-layout:
+  `apps/simulator/src/simulator/`, `apps/simulator/tests/`).
+- [x] Add a minimal `apps/simulator/pyproject.toml` (setuptools, src-layout, exact-pinned
+  SUMO deps matching `requirements.in`) and a `tests/` folder with one real smoke test.
+- [x] Resolve the long-standing placeholders this unblocks: `pyproject.toml`'s
+  `[tool.ruff.lint.isort] known-first-party` / `[tool.coverage.run] source`, `pytest.ini`'s
+  `testpaths` — all point at `simulator`/`apps/simulator` now. `fail_under` deliberately
+  left as a placeholder (ADR-004) — a real baseline is meaningless against today's trivial
+  skeleton, deferred to Phase 5.
+- [x] Update `AGENTS.md`, `README.md`, `docs/architecture/current-state.md`.
+  Result: also found and fixed a real, previously-masked bug while verifying —
+  `pytest-cov` was never actually installed (`pytest --cov` failed with "unrecognized
+  arguments"), even though `docs/standards/testing.md` and `ci.yml` both assumed it. Added
+  to `requirements.in`, lock recompiled, verified working (100% on the trivial skeleton, as
+  expected). Also closed `GAP-E2-CICHAIN` — fixed all 3 remaining `<placeholder>` bugs in
+  `ci.yml` (`Run tests`' install step, `SAST`'s `--error`, `Dependencies`' licence-scan
+  `--ignore-packages`) now that `apps/simulator` gives them real values to point at.
 
 ### Phase 3: Fetch OSM data and build the routable network
 
