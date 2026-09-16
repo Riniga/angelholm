@@ -190,7 +190,7 @@ None of these are declared in any dependency file yet.
 Unlike the runtime layer, the **tooling** dependency surface is already scaffolded, though not yet exercised against real code:
 
 * `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, which **has been generated and verified not to have drifted** from `requirements.in`.
-* `requirements.in` — source ranges for the pip-compiled lock: `ruff==0.16.6` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step) and `pre-commit>=3,<5`.
+* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps) and `pre-commit>=3,<5`.
 * `pyproject.toml` — `[tool.ruff]` (formatter/linter config) and `[tool.coverage]` (coverage gate); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. Source roots (`src`, `known-first-party`) and the coverage `source` list are still placeholders (`<your_package_1>`, etc.).
 * `pytest.ini` — `testpaths` still points at placeholder paths (`<path/to/package_1/tests>`); no real package exists to point at yet.
 * `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files`, and `detect-secrets`.
@@ -236,7 +236,7 @@ No automated test suite currently exists — there is no source code to test. Te
 
 Development follows the documented flow: `Vision → Roadmap → MVP → Plan → Implementation → Test → Pull Request` (`docs/development/methodology.md`), itself the project-level elaboration of the organisation-wide [Projektets utvecklingsmetodik](../methodology/index.md) (21 chapters across areas A–F, v1.0 as of 2026-09-07; 5 chapters still marked "utkast" pending a named expert's final sign-off — see `docs/methodology/index.md` "Nuläge").
 
-`docs/methodology-compliance/` exists (`README.md`, `gap-register.md`, `interpretations.md`, `exceptions.md`, `_template.md`) but holds **no project-specific entries yet** — `interpretations.md` has only a worked example, and the gap register has no rows. This project has not yet performed its own methodology-compliance assessment.
+`docs/methodology-compliance/` holds a first real baseline (MVP-000 Phases 3–4): `interpretations.md` has 4 real, ADR-linked entries (formatter/linter, dependency locking, test-strategy shape, AI commit attribution); `gap-register.md` has 6 rows, one already closed (`GAP-D2-BRANCHPROTECT`, branch protection applied — see below), the rest open including `GAP-E2-CICHAIN` (3 of `ci.yml`'s 6 jobs fail on placeholder text, confirmed by a real CI run) and `GAP-D1-COVERAGE`. `exceptions.md` has one active entry (`EX-001`, required-approval-count `0` while single-maintainer). A full per-chapter (`a-…` through `f-…`) assessment does not exist yet — tracked as `GAP-CHAPTERASSESS`.
 
 Each MVP should establish a small, executable and verifiable capability rather than introducing large amounts of speculative architecture.
 
@@ -244,7 +244,7 @@ Each MVP should establish a small, executable and verifiable capability rather t
 
 Documented in `docs/standards/git.md`: feature branches off `main` (`feature/`, `fix/`, `docs/`, `refactor/`, `chore/` prefixes), PRs required against `main`, no AI co-author trailer in commit messages (AI assistance is instead recorded via the checkbox in `.github/pull_request_template.md`).
 
-`docs/development/repo-settings.md` documents the GitHub-side settings this requires (branch protection ruleset, required status checks, Dependabot alerts) as an owner checklist — explicitly marked **"not yet applied"** in the document itself. Whether these settings have actually been configured on the GitHub repository is unknown from the repository contents alone.
+`docs/development/repo-settings.md` documents the GitHub-side settings this requires. As of 2026-09-16, branch protection (ruleset `main-protection`, id `23560670`), Dependabot vulnerability alerts, and automated security fixes are **applied** — confirmed via `gh api`, not just documented. Only 3 of `ci.yml`'s 6 jobs are required status checks so far (the other 3 are blocked on `GAP-E2-CICHAIN`); `CODEOWNERS` and required-approval-count `1` remain for when a second reviewer joins (§3, `EX-001`).
 
 ### CI/CD
 
@@ -399,9 +399,10 @@ The project is new and several important questions remain intentionally open, at
 * Project-identity placeholders (project name, Conda environment name, security contact) have been resolved across `README.md`, `AGENTS.md`, `SECURITY.md`, `environment.yml`, `docs/development/setup.md`/`environment.md`, `.github/workflows/ci.yml`, and `docs/architecture/current-state.md`.
 * Placeholders that depend on an app or package actually existing — `pyproject.toml` (`<your_package_1>` source roots), `pytest.ini` (`testpaths`), `.github/workflows/ci.yml` (per-package install steps, Semgrep's `<your-source-dirs>`, the licence scan's `<your-internal-package-names>`), `.env.example` (per-service variables) — are deliberately still unresolved: there is nothing real to name yet. `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 resolves them when the first app is created.
 * `_LÄS-MIG-FÖRST.md`'s bootstrap steps are all complete and the file has been deleted, per its own instruction.
-* No project-specific `docs/methodology-compliance/` assessment exists yet (empty gap register, no per-chapter `a-…` through `f-…` assessment files, only a generic worked example in `interpretations.md`) — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 3.
-* `docs/development/repo-settings.md`'s owner checklist (branch protection, required status checks, Dependabot alerts) is documented but marked "not yet applied"; its actual GitHub-side status is unknown from the repository alone — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 4.
-* No ADRs exist yet despite several decisions already in force in practice (Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer) — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 2.
+* A full per-chapter (`a-…` through `f-…`) `docs/methodology-compliance/` assessment does not exist yet — only the `interpretations.md`/`gap-register.md` baseline from MVP-000 Phase 3 (see above). Tracked as `GAP-CHAPTERASSESS`.
+* `docs/development/repo-settings.md`'s owner checklist is mostly applied (branch protection, Dependabot alerts, automated security fixes — `GAP-D2-BRANCHPROTECT` closed 2026-09-16). What remains: 3 more required status checks once `GAP-E2-CICHAIN` closes, `CODEOWNERS` + raising required approvals to 1 once a second reviewer exists.
+* 3 of `ci.yml`'s 6 CI jobs (SAST, Dependencies, Run tests) fail on every run — not real findings, but a shell syntax error from literal `<placeholder>` text still in the workflow file. Confirmed on PR #1's real run (`GAP-E2-CICHAIN`); resolved by `docs/plans/001-first-traffic-simulator.plan.md` Phase 2.
+* Five ADRs now exist (`docs/architecture/decisions/`) recording the decisions already in force (methodology adoption, Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer) — all marked **Proposed**, not yet formally reviewed/accepted.
 
 ### Domain / product
 

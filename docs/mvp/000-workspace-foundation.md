@@ -104,3 +104,48 @@ Established while validating the skeleton against this project (see
   ruleset ID and date recorded, or every unapplied item has a matching, owned gap-register
   row.
 - `_LÄS-MIG-FÖRST.md` no longer exists in the repository.
+
+## Outcome at close (2026-09-16)
+
+Closed as **delivered**, verified for real against each criterion, not just asserted:
+
+- **Environment**: `conda env create -f environment.yml && conda activate angelholm`
+  confirmed working (by the repo owner directly, and independently in this session — `ruff
+  0.16.7`, `pytest 9.1.1`, `pre-commit 4.6.2` all resolve inside it). `requirements-lock.txt`
+  is committed and re-verified against `requirements.in` at close: no real drift. One
+  non-obvious finding along the way — a naive `diff` twice reported drift that wasn't real;
+  `pip-compile`'s `--hash=` line *ordering* within a package isn't fully deterministic
+  run-to-run, even though the underlying hash *set* is identical. Worth remembering before
+  trusting a future drift-check diff at face value.
+- **Ruff**: `ruff format --check .` and `ruff check .` both pass, re-confirmed at close.
+- **ADRs**: **Met.** Five ADRs exist (`ADR-001` through `ADR-005`), covering exactly the
+  five named decisions, all listed in `decisions/README.md`'s index. All five are marked
+  **Proposed**, not Accepted — deliberate, per this plan's own risk note: an AI-drafted ADR
+  needs real human review before it's accepted, not automatic sign-off.
+- **`interpretations.md`**: **Met, with a reasoned deviation from a literal reading.** Four
+  of the five decisions got their own dated, ADR-linked section (formatter/linter,
+  dependency locking, test-strategy shape, AI commit attribution). The fifth — adopting
+  Projektets utvecklingsmetodik itself — is referenced from the file's intro paragraph
+  (linking `ADR-001`) rather than as its own numbered section, because
+  `interpretations.md`'s own stated purpose is specifically for choices *the methodology
+  leaves to the project*; adopting the methodology at all isn't that kind of choice, it's
+  the umbrella decision everything else sits under. A deliberate structural call, not an
+  oversight.
+- **`gap-register.md`**: **Met.** Six real rows, each with severity/owner/status:
+  `GAP-D2-BRANCHPROTECT` (H, closed during Phase 4), `GAP-E2-CICHAIN` (H, open),
+  `GAP-D1-COVERAGE` (H, open, deferred to MVP-001 by design), `GAP-D2-CODEOWNERS` (L, not
+  applicable yet), `GAP-CHAPTERASSESS` (L, open), `GAP-C1-SASTCONFIRM` (external —
+  tracking).
+- **`repo-settings.md`**: **Met.** Ruleset `main-protection` (id `23560670`) applied
+  2026-09-16, recorded with date and id. Unapplied items each have a matching reference:
+  `EX-001` (required-approval-count `0`), `GAP-D2-CODEOWNERS` (no `CODEOWNERS` yet),
+  `GAP-E2-CICHAIN` (3 of 6 required status checks deferred). Also enabled Dependabot
+  vulnerability alerts and automated security fixes — both were actually disabled, a real
+  gap caught only by checking the live setting via `gh api` rather than assuming.
+- **`_LÄS-MIG-FÖRST.md`**: **Met.** Confirmed absent, re-checked at close.
+
+**Not anticipated when this MVP was written, found along the way:** `GAP-E2-CICHAIN` (3 of
+`ci.yml`'s 6 jobs fail unconditionally on leftover `<placeholder>` text) — discovered from
+PR #1's real CI run, not from reading the workflow file. It directly shaped how branch
+protection was applied (only the 3 working jobs required, not all 6) and is now MVP-001's
+problem to close.

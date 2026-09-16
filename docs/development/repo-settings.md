@@ -9,12 +9,25 @@ in [`../methodology-compliance/gap-register.md`](../methodology-compliance/gap-r
 until it's applied — this project used `GAP-D2-BRANCHPROTECT`, `GAP-F1-ENFORCE`, and
 `GAP-E2-GREENMAIN` as a worked example.
 
-> **Status: not yet applied — fill in when you apply this to a real repo.** When you set
-> this up, record here (with the date and any ruleset/rule id) exactly what you applied and
-> any deliberate deviation (e.g. required-approval count while the project has a single
-> maintainer — document that as an exception, same pattern as
-> [`exceptions.md`](../methodology-compliance/exceptions.md), and track it as its own gap
-> row until a second reviewer exists to close it).
+> **Status: applied 2026-09-16.** Repository ruleset `main-protection`, id `23560670`
+> (`https://github.com/Riniga/angelholm/rules/23560670`), applied via `gh api` against the
+> repo confirmed public (`visibility: public`, so the dependency-graph prerequisite in
+> §4 is automatically satisfied — no separate toggle needed).
+>
+> One deliberate deviation: **required approving review count is `0`**, not `1` — this
+> project has a single maintainer who genuinely cannot get a non-author review today.
+> Documented as [`EX-001`](../methodology-compliance/exceptions.md#ex-001) and tracked as
+> `GAP-D2-BRANCHPROTECT` in the gap register until a second reviewer exists (§3).
+>
+> A second deliberate deviation: only **3 of the 6 CI jobs** (`Ruff`, `Instruction file
+> scan`, `Secret scan`) are required status checks — not all 6. The other 3 (`SAST`,
+> `Dependencies`, `Run tests`) currently fail on every run regardless of PR content, a known
+> bug (`GAP-E2-CICHAIN`: leftover `<placeholder>` text in `ci.yml` parsed as shell
+> redirection), not a real finding. Requiring them now would make every PR — including the
+> one that fixes them — permanently unmergeable through the ruleset's own "no bypass" rule.
+> **Add the remaining 3 as required status checks once `GAP-E2-CICHAIN` closes**
+> (`docs/plans/001-first-traffic-simulator.plan.md` Phase 2) — this is a follow-up action,
+> not a new gap.
 
 ---
 
@@ -99,33 +112,37 @@ If any AI tool (e.g. a Copilot coding-agent identity) is granted write access to
 
 ## 4. Dependency security (methodology C2)
 
-> **Status: not yet applied — fill in when you apply this to a real repo.** Three
-> repository-level security settings, applied via `gh api` (equivalent to
-> *Settings → Security*):
+> **Status: applied 2026-09-16**, via `gh api -X PUT`:
 >
-> - **Dependency graph** — a prerequisite for the two settings below; some platforms
->   enable it automatically when you enable either of them.
-> - **Dependabot alerts** (`PUT /repos/.../vulnerability-alerts`) — the C2 SKA 2 SCA
->   baseline.
-> - **Dependabot automated security fixes**
->   (`PUT /repos/.../automated-security-fixes`) — opens a PR automatically when an alert has
->   a known fix.
+> - **Dependency graph** — automatic; the repo is public (`visibility: public`).
+> - **Dependabot alerts** (`vulnerability-alerts`) — confirmed enabled (was disabled before
+>   this MVP; do not confuse this with `.github/dependabot.yml`'s version-update PRs, a
+>   separate, file-driven feature that was already working — see the note below).
+> - **Dependabot automated security fixes** (`automated-security-fixes`) — confirmed
+>   enabled, `{"enabled":true,"paused":false}`.
 >
 > `.github/dependabot.yml` (version-update PRs, C2 SKA 5) is committed code, not a repo
-> setting, so it isn't listed here — see `docs/standards/dependencies.md`.
+> setting, so it isn't listed here — see `docs/standards/dependencies.md`. It was already
+> working before this MVP (confirmed by PR #1, a real `ruff` version bump) — easy to
+> mistake for vulnerability alerts also being on, which they weren't, until now.
 
 ---
 
 ## Owner checklist
 
-- [ ] Branch protection on `main` applied per section 1 — record the ruleset id and date.
-- [ ] Bypass list confirmed empty (`bypass_actors: []`, admins included).
-- [ ] Required approvals set correctly (1, or 0 as a documented, tracked exception for a
-      genuinely single-maintainer project).
-- [ ] Each CI job you want to gate added to the required status checks.
-- [ ] Any AI-tool write access reviewed per section 2 (or: no AI tool has write access).
+- [x] Branch protection on `main` applied per section 1 — ruleset `main-protection`, id
+      `23560670`, applied 2026-09-16.
+- [x] Bypass list confirmed empty (`bypass_actors: []`, `current_user_can_bypass: "never"`).
+- [x] Required approvals set correctly — `0`, documented and tracked exception (`EX-001`,
+      `GAP-D2-BRANCHPROTECT`) for this genuinely single-maintainer project.
+- [x] Every *currently functioning* CI job added as a required status check (`Ruff`,
+      `Instruction file scan`, `Secret scan`).
+- [ ] The remaining 3 CI jobs (`SAST`, `Dependencies`, `Run tests`) — deliberately **not**
+      required yet; add them once `GAP-E2-CICHAIN` closes (see §1's status note).
+- [ ] Any AI-tool write access reviewed per section 2 (or: no AI tool has write access) —
+      not yet reviewed; no AI tool currently has direct write access to this repo.
 - [ ] **When a second reviewer joins:** raise required approvals to 1, add `CODEOWNERS`
       (section 3).
 - [ ] *(optional)* Enable "Require approval of the most recent reviewable push".
-- [ ] Dependency graph, Dependabot alerts, and automated security fixes enabled per
-      section 4.
+- [x] Dependency graph (automatic, public repo), Dependabot alerts, and automated security
+      fixes enabled per section 4 — applied 2026-09-16.

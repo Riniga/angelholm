@@ -8,45 +8,70 @@ decision.
 Each section names the methodology chapter it answers. A decision here is a *decision*, not
 an implementation — the follow-up plan named in each section does the work.
 
-Established by the MVP that adopted the methodology; record that adoption as an ADR and
-link it here.
+Established by MVP-000 (`docs/mvp/000-workspace-foundation.md`), which adopted the
+methodology in full — recorded as
+[ADR-001](../architecture/decisions/ADR-001-adopt-projektets-utvecklingsmetodik.md).
 
 ---
 
-### Example: Test-strategy shape (D1)
+### 1. Formatter & linter (B2)
 
-<!-- This is a worked example from the project this reference was drawn from, kept to show
-     the expected shape and rigour of an entry — measure the real baseline before deciding
-     a number, don't guess one. Replace with your own project's actual chapters and
-     decisions; delete this example once you have real entries. -->
+**Chapter:** [B2 – Kodstandard & stil](../methodology/b-skriva-kod/kodstandard-och-stil.md).
+
+**Decision:** **Ruff**, pinned exactly (not a range) across `requirements.in`,
+`.pre-commit-config.yaml`'s `rev`, and `ci.yml`'s install step — see
+[ADR-002](../architecture/decisions/ADR-002-ruff-as-formatter-and-linter.md) for the full
+reasoning and the alternatives rejected.
+
+**Follow-up:** None needed — already wired into pre-commit and CI. Watch for version-sync
+drift on future bumps (a Dependabot PR already demonstrated this gap once; see ADR-002's
+Context).
+
+---
+
+### 2. Dependency locking (C2)
+
+**Chapter:** [C2 – Beroendehantering, paketkällor & signering](../methodology/c-sakerhet/beroendehantering-paketkallor-och-signering.md)
+(SKA 3).
+
+**Decision:** **`pip-compile`** (from `pip-tools`), always with `--generate-hashes
+--no-annotate --no-header --output-file=requirements-lock.txt` explicit — see
+[ADR-003](../architecture/decisions/ADR-003-pip-compile-for-dependency-locking.md), which
+also records the missing-`--output-file` gotcha this project hit for real while generating
+its first lock file.
+
+**Follow-up:** None needed for the mechanism itself. SBOM export (C2 SKA 1) and the
+licence-scan allow-list (C2 SKA 4) remain to be exercised against a real dependency (SUMO,
+via MVP-001) — see that plan's Investigation section for the licence question already
+identified.
+
+---
+
+### 3. Test-strategy shape (D1)
 
 **Chapter:** [D1 – Testning](../methodology/d-kvalitetssakring/testning.md) (SKA 1–2, BÖR 1).
 
-**Decision:** **Classic test pyramid.** State *why* — where does this project's risk
-actually live (heavy domain logic? thin CRUD? something else)? Pick the shape the
-methodology chapter recommends for that profile, don't default to whatever's familiar.
+**Decision:** **Coverage enforced as a ratchet, repo-wide, not per-package** — see
+[ADR-004](../architecture/decisions/ADR-004-coverage-as-a-ratchet.md). This records the
+*policy shape* only: `pyproject.toml`'s `fail_under = 50` remains an explicit placeholder,
+not a measured baseline, because no application code exists yet to measure — setting the
+real number is deferred to MVP-001, which is the first MVP to produce testable code.
+Tracked as `GAP-D1-COVERAGE` in the gap register until then.
 
-**Coverage:**
-
-- Measure the real baseline (`pytest-cov`, dated) before setting a floor number — a floor
-  set as a generic placeholder (e.g. "50%, the chapter's suggested adoption-friendly
-  starting point") can end up meaningless if the real baseline is already well above it,
-  as happened in this worked example.
-- **Floor:** set just below the measured baseline, enforced as a **ratchet** (CI fails if
-  coverage drops below it — never a rising target chased toward 100%).
-- Decide **repo-wide vs. per-package** deliberately and record the trade-off, not just the
-  choice.
-- The floor is raised in steps as the codebase matures, each raise a deliberate PR that
-  also records the new floor and updates this section.
-
-**Follow-up:** *(the plan that implements this decision)*.
+**Follow-up:** `docs/plans/001-first-traffic-simulator.plan.md` — measure a real baseline
+once code exists and set the floor just below it, per ADR-004.
 
 ---
 
-### 1. *(Next decision — name the chapter, e.g. "Formatter & linter (B2)")*
+### 4. AI commit attribution (E1)
 
-**Chapter:** *(link)*.
+**Chapter:** [E1 – Versionshantering & branchstrategi](../methodology/e-leverans/versionshantering-och-branchstrategi.md)
+(SKA 5).
 
-**Decision:** *(what was chosen, and why — the reasoning matters more than the choice)*.
+**Decision:** **No AI-specific marking in commit messages** (no `Co-authored-by:` trailer
+for an AI tool); AI assistance is recorded once, on the pull request, via
+`.github/pull_request_template.md`'s checkbox — see
+[ADR-005](../architecture/decisions/ADR-005-no-ai-commit-trailer.md).
 
-**Follow-up:** *(the plan that implements it)*.
+**Follow-up:** None needed — already the stated rule in `docs/standards/git.md` and applied
+in practice throughout this project's commit history.

@@ -2,8 +2,7 @@
 
 Reference: [`docs/mvp/000-workspace-foundation.md`](../mvp/000-workspace-foundation.md)
 
-**Status:** In progress — the environment/lock-file work (Phase 1) was already carried out
-while validating the workspace, ahead of this plan being written down.
+**Status:** Complete — all 5 phases done, MVP closed 2026-09-16 as delivered.
 
 ## 0. Investigation
 
@@ -56,50 +55,78 @@ is a tracked gap; and `_LÄS-MIG-FÖRST.md` is gone.
 
 - [x] Generate `requirements-lock.txt` with the correct `--output-file` flag.
   Result: also found and fixed the missing-flag bug in 5 files (see Investigation).
-- [ ] User confirms `conda env create -f environment.yml && conda activate angelholm`
+- [x] User confirms `conda env create -f environment.yml && conda activate angelholm`
   succeeds end-to-end, and `ruff --version` / `pytest --version` / `pre-commit --version`
-  all resolve inside it. *(Needs the repo owner — `conda` isn't on this session's own PATH.)*
-- [ ] Commit `requirements-lock.txt` together with the doc fixes.
+  all resolve inside it.
+- [x] Commit `requirements-lock.txt` together with the doc fixes.
+  Result: also caught and fixed a follow-on desync — a merged Dependabot PR bumped `ruff`
+  to `0.16.7` in `requirements.in`/lock but left `.pre-commit-config.yaml` and `ci.yml` on
+  `0.16.6`; fixed as a separate prerequisite commit before Phase 2 started.
 
 ### Phase 2: Record the decisions already in force as ADRs
 
-- [ ] ADR: Ruff as the formatter/linter (cites `pyproject.toml`'s own comment asking for
-  this).
-- [ ] ADR: `pip-compile` as the dependency-lock mechanism — include the `--output-file`
+- [x] ADR: Ruff as the formatter/linter (cites `pyproject.toml`'s own comment asking for
+  this). → `docs/architecture/decisions/ADR-002-ruff-as-formatter-and-linter.md`.
+- [x] ADR: `pip-compile` as the dependency-lock mechanism — include the `--output-file`
   lesson from Phase 1's investigation as context, so the next person doesn't repeat it.
-- [ ] ADR: coverage-ratchet testing-policy shape (repo-wide floor, raised only deliberately;
-  see `docs/standards/testing.md` "Coverage").
-- [ ] ADR: no AI commit-trailer, AI assistance recorded via PR checkbox instead (already
-  decided per `docs/standards/git.md`, just not yet an ADR).
-- [ ] ADR: adopting Projektets utvecklingsmetodik as this project's methodology baseline.
-- [ ] Add all five to `docs/architecture/decisions/README.md`'s index.
+  → `ADR-003-pip-compile-for-dependency-locking.md`.
+- [x] ADR: coverage-ratchet testing-policy shape (repo-wide floor, raised only deliberately;
+  see `docs/standards/testing.md` "Coverage"). → `ADR-004-coverage-as-a-ratchet.md`.
+- [x] ADR: no AI commit-trailer, AI assistance recorded via PR checkbox instead (already
+  decided per `docs/standards/git.md`, just not yet an ADR). → `ADR-005-no-ai-commit-trailer.md`.
+- [x] ADR: adopting Projektets utvecklingsmetodik as this project's methodology baseline.
+  → `ADR-001-adopt-projektets-utvecklingsmetodik.md`.
+- [x] Add all five to `docs/architecture/decisions/README.md`'s index.
+  All five marked **Proposed**, not Accepted — per this plan's own Risk note, they need a
+  real human review before being considered accepted, not just auto-approval because an AI
+  drafted them. Update each Status line to Accepted once reviewed.
 
 ### Phase 3: Write the first methodology-compliance baseline
 
-- [ ] Add this project's real entries to `docs/methodology-compliance/interpretations.md`
+- [x] Add this project's real entries to `docs/methodology-compliance/interpretations.md`
   (one section per ADR above, linking it).
-- [ ] Add a `docs/methodology-compliance/gap-register.md` row for every currently-known open
-  gap: repo settings not applied (until Phase 4 closes it), no `CODEOWNERS`, coverage floor
-  unmeasured (blocked on MVP-001 producing real code), SAST tool position unconfirmed
-  (`ci.yml`'s Semgrep config is a starting point, not a signed-off choice).
+- [x] Add a `docs/methodology-compliance/gap-register.md` row for every currently-known open
+  gap. Result: 6 rows — `GAP-D2-BRANCHPROTECT`, `GAP-E2-CICHAIN` (H); `GAP-D2-CODEOWNERS`,
+  `GAP-CHAPTERASSESS` (L); `GAP-D1-COVERAGE` (H); `GAP-C1-SASTCONFIRM` (external). Also
+  confirmed one thing was *not* a gap while assessing: Dependabot alerts/version-update PRs
+  are already live (PR #1 merged for real), so no row was added for that.
+  `GAP-E2-CICHAIN` is new since this plan was first written — it wasn't anticipated until
+  PR #1's real CI run surfaced it.
 
 ### Phase 4: Apply or track repository settings
 
-- [ ] Confirm a real GitHub remote/repository exists (prerequisite — see Investigation).
-- [ ] Apply `docs/development/repo-settings.md`'s branch-protection ruleset and required
-  status checks, or hand this off explicitly to the repo owner if it needs access this
-  session doesn't have.
-- [ ] Record the applied ruleset id/date in `repo-settings.md`, or add a gap-register row for
-  anything left unapplied.
-- [ ] Enable Dependabot alerts + automated security fixes (repository setting, not a file).
+- [x] Confirm a real GitHub remote/repository exists (prerequisite — see Investigation).
+  Result: `gh auth status` confirmed authenticated as `Riniga` with `repo` scope — this
+  session *did* have the access assumed unavailable when the plan was first written.
+- [x] Apply `docs/development/repo-settings.md`'s branch-protection ruleset and required
+  status checks. Result: ruleset `main-protection` (id `23560670`) applied via `gh api`,
+  requiring only the 3 currently-passing CI jobs (`Ruff`, `Instruction file scan`, `Secret
+  scan`) — not all 6, since `GAP-E2-CICHAIN` means the other 3 fail unconditionally right
+  now and would make the ruleset self-blocking.
+- [x] Record the applied ruleset id/date in `repo-settings.md`. Result: also discovered and
+  fixed an unrelated correctness issue while verifying — an earlier gap-register changelog
+  entry (Phase 3) had wrongly claimed Dependabot vulnerability alerts were already working,
+  conflating them with the separate, file-driven version-update feature. Corrected.
+- [x] Enable Dependabot alerts + automated security fixes. Result: both were actually
+  **disabled** (verified via `gh api`, not assumed) — enabled now, confirmed via a second
+  `gh api` read after the `PUT`.
 
 ### Phase 5: Close out the bootstrap
 
-- [ ] Re-check every step in `_LÄS-MIG-FÖRST.md` against the repo's actual state.
-- [ ] Delete `_LÄS-MIG-FÖRST.md`.
-- [ ] Run `ruff format --check .` and `ruff check .`; confirm both green.
-- [ ] Fill in `docs/mvp/000-workspace-foundation.md`'s "Outcome at close" against each
-  acceptance criterion.
+- [x] Re-check every step in `_LÄS-MIG-FÖRST.md` against the repo's actual state. Result:
+  done earlier in this MVP's own timeline, before Phase 2 started — all 5 steps confirmed
+  complete at that point.
+- [x] Delete `_LÄS-MIG-FÖRST.md`. Result: already done; re-confirmed absent at close.
+- [x] Run `ruff format --check .` and `ruff check .`; confirm both green. Result: green,
+  re-confirmed at close.
+- [x] Fill in `docs/mvp/000-workspace-foundation.md`'s "Outcome at close" against each
+  acceptance criterion. Result: closed as **delivered** — see that document for the
+  criterion-by-criterion detail, including one reasoned deviation
+  (`interpretations.md`'s structure) and one thing found along the way that wasn't
+  anticipated when this plan was written (`GAP-E2-CICHAIN`).
+
+**MVP-000 is complete.** All 5 phases done; see `docs/mvp/000-workspace-foundation.md`
+"Outcome at close" for the full report.
 
 ## 5. Risks / open questions
 

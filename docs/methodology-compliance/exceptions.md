@@ -16,6 +16,28 @@ exception is never a permanent waiver. Related: [`gap-register.md`](gap-register
 
 ---
 
+## EX-001 — Required PR approving-review count set to 0
+
+| | |
+|---|---|
+| **Methodology basis** | Kind 2 — forced by circumstance. [D2 – Kodgranskning](../methodology/d-kvalitetssakring/kodgranskning.md) SKA 2 asks for at least one non-author human approval before merge; nothing in D2 permits an exception from this. |
+| **Status** | Active |
+| **Granted** | 2026-09-16 |
+| **Responsible** | Rickard Nisses-Gagnér (project owner) |
+| **Review** | The moment a second reviewer joins the project — raise `required_approving_review_count` to `1` on the `main-protection` ruleset (id `23560670`) and add a `CODEOWNERS` file per `docs/development/repo-settings.md` §3. Not time-boxed to a date, since it's genuinely blocked on team size, not effort — but re-check at every MVP close in the meantime. |
+| **Gap-register link** | `GAP-D2-BRANCHPROTECT` |
+
+*(Reasoning: this project currently has a single maintainer. A PR-required, non-author-approval
+rule is technically impossible to satisfy alone — the author has no one else to request review
+from. Rather than disable "require a pull request before merging" entirely (which would lose
+the required-status-checks and no-direct-push guarantees too), the approving-review count is
+set to `0` so the PR-based workflow, status checks, and branch protection all still apply; only
+the specific "someone else approved this" guarantee is unmet. This is exactly the scenario
+`docs/development/repo-settings.md` §1 anticipated and pre-documented before it was ever
+applied for real.)*
+
+---
+
 ## EX-NNN — *(short title)*
 
 <!-- One entry per exception. Copy this block; increment the id. -->
