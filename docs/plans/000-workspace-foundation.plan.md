@@ -2,8 +2,7 @@
 
 Reference: [`docs/mvp/000-workspace-foundation.md`](../mvp/000-workspace-foundation.md)
 
-**Status:** In progress — the environment/lock-file work (Phase 1) was already carried out
-while validating the workspace, ahead of this plan being written down.
+**Status:** Complete — all 5 phases done, MVP closed 2026-09-16 as delivered.
 
 ## 0. Investigation
 
@@ -114,11 +113,20 @@ is a tracked gap; and `_LÄS-MIG-FÖRST.md` is gone.
 
 ### Phase 5: Close out the bootstrap
 
-- [ ] Re-check every step in `_LÄS-MIG-FÖRST.md` against the repo's actual state.
-- [ ] Delete `_LÄS-MIG-FÖRST.md`.
-- [ ] Run `ruff format --check .` and `ruff check .`; confirm both green.
-- [ ] Fill in `docs/mvp/000-workspace-foundation.md`'s "Outcome at close" against each
-  acceptance criterion.
+- [x] Re-check every step in `_LÄS-MIG-FÖRST.md` against the repo's actual state. Result:
+  done earlier in this MVP's own timeline, before Phase 2 started — all 5 steps confirmed
+  complete at that point.
+- [x] Delete `_LÄS-MIG-FÖRST.md`. Result: already done; re-confirmed absent at close.
+- [x] Run `ruff format --check .` and `ruff check .`; confirm both green. Result: green,
+  re-confirmed at close.
+- [x] Fill in `docs/mvp/000-workspace-foundation.md`'s "Outcome at close" against each
+  acceptance criterion. Result: closed as **delivered** — see that document for the
+  criterion-by-criterion detail, including one reasoned deviation
+  (`interpretations.md`'s structure) and one thing found along the way that wasn't
+  anticipated when this plan was written (`GAP-E2-CICHAIN`).
+
+**MVP-000 is complete.** All 5 phases done; see `docs/mvp/000-workspace-foundation.md`
+"Outcome at close" for the full report.
 
 ## 5. Risks / open questions
 
