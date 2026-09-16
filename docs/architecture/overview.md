@@ -236,7 +236,7 @@ No automated test suite currently exists — there is no source code to test. Te
 
 Development follows the documented flow: `Vision → Roadmap → MVP → Plan → Implementation → Test → Pull Request` (`docs/development/methodology.md`), itself the project-level elaboration of the organisation-wide [Projektets utvecklingsmetodik](../methodology/index.md) (21 chapters across areas A–F, v1.0 as of 2026-09-07; 5 chapters still marked "utkast" pending a named expert's final sign-off — see `docs/methodology/index.md` "Nuläge").
 
-`docs/methodology-compliance/` exists (`README.md`, `gap-register.md`, `interpretations.md`, `exceptions.md`, `_template.md`) but holds **no project-specific entries yet** — `interpretations.md` has only a worked example, and the gap register has no rows. This project has not yet performed its own methodology-compliance assessment.
+`docs/methodology-compliance/` holds a first real baseline (MVP-000 Phase 3): `interpretations.md` has 4 real, ADR-linked entries (formatter/linter, dependency locking, test-strategy shape, AI commit attribution) and `gap-register.md` has 6 open rows, including two H-severity ones confirmed by a real CI run — `GAP-D2-BRANCHPROTECT` (branch protection not applied) and `GAP-E2-CICHAIN` (3 of `ci.yml`'s 6 jobs fail on placeholder text). A full per-chapter (`a-…` through `f-…`) assessment does not exist yet — tracked as `GAP-CHAPTERASSESS`.
 
 Each MVP should establish a small, executable and verifiable capability rather than introducing large amounts of speculative architecture.
 
@@ -399,9 +399,10 @@ The project is new and several important questions remain intentionally open, at
 * Project-identity placeholders (project name, Conda environment name, security contact) have been resolved across `README.md`, `AGENTS.md`, `SECURITY.md`, `environment.yml`, `docs/development/setup.md`/`environment.md`, `.github/workflows/ci.yml`, and `docs/architecture/current-state.md`.
 * Placeholders that depend on an app or package actually existing — `pyproject.toml` (`<your_package_1>` source roots), `pytest.ini` (`testpaths`), `.github/workflows/ci.yml` (per-package install steps, Semgrep's `<your-source-dirs>`, the licence scan's `<your-internal-package-names>`), `.env.example` (per-service variables) — are deliberately still unresolved: there is nothing real to name yet. `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 resolves them when the first app is created.
 * `_LÄS-MIG-FÖRST.md`'s bootstrap steps are all complete and the file has been deleted, per its own instruction.
-* No project-specific `docs/methodology-compliance/` assessment exists yet (empty gap register, no per-chapter `a-…` through `f-…` assessment files, only a generic worked example in `interpretations.md`) — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 3.
-* `docs/development/repo-settings.md`'s owner checklist (branch protection, required status checks, Dependabot alerts) is documented but marked "not yet applied"; its actual GitHub-side status is unknown from the repository alone — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 4.
-* No ADRs exist yet despite several decisions already in force in practice (Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer) — tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 2.
+* A full per-chapter (`a-…` through `f-…`) `docs/methodology-compliance/` assessment does not exist yet — only the `interpretations.md`/`gap-register.md` baseline from MVP-000 Phase 3 (see above). Tracked as `GAP-CHAPTERASSESS`.
+* `docs/development/repo-settings.md`'s owner checklist (branch protection, required status checks) is documented but not yet applied — confirmed still open (`GAP-D2-BRANCHPROTECT`), tracked by `docs/plans/000-workspace-foundation.plan.md` Phase 4. (Dependabot alerts specifically *are* confirmed working — PR #1 merged for real.)
+* 3 of `ci.yml`'s 6 CI jobs (SAST, Dependencies, Run tests) fail on every run — not real findings, but a shell syntax error from literal `<placeholder>` text still in the workflow file. Confirmed on PR #1's real run (`GAP-E2-CICHAIN`); resolved by `docs/plans/001-first-traffic-simulator.plan.md` Phase 2.
+* Five ADRs now exist (`docs/architecture/decisions/`) recording the decisions already in force (methodology adoption, Ruff, `pip-compile`, coverage-ratchet policy, no-AI-commit-trailer) — all marked **Proposed**, not yet formally reviewed/accepted.
 
 ### Domain / product
 

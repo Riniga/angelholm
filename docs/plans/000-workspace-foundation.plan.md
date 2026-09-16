@@ -84,12 +84,15 @@ is a tracked gap; and `_LÄS-MIG-FÖRST.md` is gone.
 
 ### Phase 3: Write the first methodology-compliance baseline
 
-- [ ] Add this project's real entries to `docs/methodology-compliance/interpretations.md`
+- [x] Add this project's real entries to `docs/methodology-compliance/interpretations.md`
   (one section per ADR above, linking it).
-- [ ] Add a `docs/methodology-compliance/gap-register.md` row for every currently-known open
-  gap: repo settings not applied (until Phase 4 closes it), no `CODEOWNERS`, coverage floor
-  unmeasured (blocked on MVP-001 producing real code), SAST tool position unconfirmed
-  (`ci.yml`'s Semgrep config is a starting point, not a signed-off choice).
+- [x] Add a `docs/methodology-compliance/gap-register.md` row for every currently-known open
+  gap. Result: 6 rows — `GAP-D2-BRANCHPROTECT`, `GAP-E2-CICHAIN` (H); `GAP-D2-CODEOWNERS`,
+  `GAP-CHAPTERASSESS` (L); `GAP-D1-COVERAGE` (H); `GAP-C1-SASTCONFIRM` (external). Also
+  confirmed one thing was *not* a gap while assessing: Dependabot alerts/version-update PRs
+  are already live (PR #1 merged for real), so no row was added for that.
+  `GAP-E2-CICHAIN` is new since this plan was first written — it wasn't anticipated until
+  PR #1's real CI run surfaced it.
 
 ### Phase 4: Apply or track repository settings
 
