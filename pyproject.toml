@@ -57,8 +57,10 @@ source = [
 ]
 
 [tool.coverage.report]
-# Still a placeholder (ADR-004, GAP-D1-COVERAGE): apps/simulator's only code right now is a
-# trivial skeleton (MVP-001 Phase 2) — measuring a real baseline now would be meaningless.
-# Set the real floor once the MVP is functionally complete (Phase 5).
-fail_under = 50
+# Real, measured baseline (ADR-004, GAP-D1-COVERAGE, MVP-001 Phase 5): apps/simulator
+# measured at 99.13% (`pytest -q --cov`, 2026-09-16; only uncovered line is run.py's
+# `__main__` guard, reasonably left uncovered per docs/standards/coding.md). Floor set
+# just below that, not at 99 itself, per the ratchet policy's own reasoning — see
+# docs/methodology-compliance/interpretations.md.
+fail_under = 95
 skip_covered = true

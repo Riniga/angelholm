@@ -2,7 +2,7 @@
 
 Reference: [`docs/mvp/001-first-traffic-simulator.md`](../mvp/001-first-traffic-simulator.md)
 
-**Status:** In progress — Phase 1 complete.
+**Status:** Complete — all 5 phases done, MVP closed 2026-09-16 as delivered.
 
 ## 0. Investigation
 
@@ -163,18 +163,23 @@ regenerates them each run.
 
 ### Phase 5: Wire up a repeatable start command and update docs
 
-- [ ] Add a documented entrypoint (e.g. `apps/simulator/run.py` or a small script) so "a
-  developer can start the simulation again using documented project instructions" is
-  concretely true, not just implied.
-- [ ] Update `docs/architecture/overview.md`'s "Major Components" (Geographic Model /
-  Mobility Simulation move from "not yet implemented" to a real, minimal implementation)
-  and "Current Workspace Structure".
-- [ ] Update `docs/architecture/current-state.md`'s Applications table with the new
-  `apps/simulator` row (status, test count, capabilities).
-- [ ] Run `pytest -q`, `ruff format --check .`, `ruff check .`; confirm all green.
-- [ ] Fill in `docs/mvp/001-first-traffic-simulator.md`'s "Outcome at close" against each
-  acceptance criterion, honestly — including the GUI check, which only the user can attest
-  to.
+- [x] Add a documented entrypoint. Result: `simulator/run.py`'s `main()`, registered as
+  the `simulator` console command (`[project.scripts]` in `apps/simulator/pyproject.toml`)
+  — confirmed working for real from the command line (`simulator --headless`), not just
+  through test mocks. `--rebuild-network` and `--headless` flags; reuses the committed
+  network by default. Added `run_gui()` to `simulate.py` alongside it.
+- [x] Update `docs/architecture/overview.md`'s "Major Components", "Current Workspace
+  Structure", "Existing Dependencies", "Build and Development Process", and the
+  "Simulation Engine Should Remain Replaceable"/"Domain product" sections — all had gone
+  stale describing the pre-MVP-001 state.
+- [x] Update `docs/architecture/current-state.md`'s Applications table, Test counts.
+- [x] Run `pytest -q`, `ruff format --check .`, `ruff check .`; confirm all green. Result:
+  21 tests, 99.13% coverage — real baseline measured, floor set to 95% (`ADR-004`,
+  `GAP-D1-COVERAGE` closed), not left as a placeholder any longer.
+- [x] Fill in `docs/mvp/001-first-traffic-simulator.md`'s "Outcome at close". Result:
+  closed as **delivered** — all 6 acceptance criteria met, including the GUI check,
+  confirmed directly by the project owner (who also caught a real usability bug: default
+  playback was too fast to watch, fixed with a `<gui_only><delay>` setting).
 
 ## 5. Risks / open questions
 

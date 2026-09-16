@@ -1,0 +1,96 @@
+"""Tests for simulator.run — mocked pipeline functions, no live SUMO/network calls."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from unittest.mock import patch
+
+from simulator.run import main
+
+
+class TestMain:
+    def test_reuses_existing_network_and_launches_gui_by_default(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        (tmp_path / "network.net.xml").write_text("<net/>")
+
+        with (
+            patch("simulator.run.fetch_osm_extract") as mock_fetch,
+            patch("simulator.run.build_network") as mock_build,
+            patch("simulator.run.generate_traffic") as mock_traffic,
+            patch("simulator.run.write_sumocfg") as mock_cfg,
+            patch("simulator.run.run_gui") as mock_gui,
+            patch("simulator.run.run_headless") as mock_headless,
+        ):
+            exit_code = main([])
+
+        assert exit_code == 0
+        mock_fetch.assert_not_called()
+        mock_build.assert_not_called()
+        mock_traffic.assert_called_once()
+        mock_cfg.assert_called_once()
+        mock_gui.assert_called_once()
+        mock_headless.assert_not_called()
+
+    def test_missing_network_triggers_fetch_and_build_even_without_flag(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        # No network.net.xml created — must be built before anything else.
+
+        with (
+            patch(
+                "simulator.run.fetch_osm_extract",
+                return_value=tmp_path / "extract.osm.xml",
+            ) as mock_fetch,
+            patch("simulator.run.build_network") as mock_build,
+            patch("simulator.run.generate_traffic"),
+            patch("simulator.run.write_sumocfg"),
+            patch("simulator.run.run_gui"),
+        ):
+            main([])
+
+        mock_fetch.assert_called_once()
+        mock_build.assert_called_once()
+
+    def test_rebuild_network_flag_forces_fetch_and_build(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        (tmp_path / "network.net.xml").write_text("<net/>")  # already exists
+
+        with (
+            patch(
+                "simulator.run.fetch_osm_extract",
+                return_value=tmp_path / "extract.osm.xml",
+            ) as mock_fetch,
+            patch("simulator.run.build_network") as mock_build,
+            patch("simulator.run.generate_traffic"),
+            patch("simulator.run.write_sumocfg"),
+            patch("simulator.run.run_gui"),
+        ):
+            main(["--rebuild-network"])
+
+        mock_fetch.assert_called_once()
+        mock_build.assert_called_once()
+
+    def test_headless_flag_runs_headless_not_gui(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        (tmp_path / "network.net.xml").write_text("<net/>")
+
+        with (
+            patch("simulator.run.fetch_osm_extract"),
+            patch("simulator.run.build_network"),
+            patch("simulator.run.generate_traffic"),
+            patch("simulator.run.write_sumocfg"),
+            patch("simulator.run.run_gui") as mock_gui,
+            patch("simulator.run.run_headless") as mock_headless,
+        ):
+            exit_code = main(["--headless"])
+
+        assert exit_code == 0
+        mock_headless.assert_called_once()
+        mock_gui.assert_not_called()

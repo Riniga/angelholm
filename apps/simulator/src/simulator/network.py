@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 # Central Ängelholm — verified during MVP-001 planning (ADR-006) to contain real road data
 # (87 highway ways via a live Overpass query). west, south, east, north.
 DEFAULT_BBOX: tuple[float, float, float, float] = (12.8580, 56.2430, 12.8660, 56.2470)
+# Alternate candidate area, not yet verified/switched to — a different neighbourhood of
+# Ängelholm to try later if this one's network turns out too small/large in practice.
+# DEFAULT_BBOX: tuple[float, float, float, float] = (12.845580, 56.253877, 12.860379, 56.247082)
 DEFAULT_PREFIX = "angelholm"
 
 

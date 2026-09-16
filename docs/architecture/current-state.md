@@ -8,7 +8,7 @@ in the same PR as any change to an app's status, test count, or key capabilities
 
 | App | Status | Tests | Key capabilities |
 |-----|--------|-------|-------------------|
-| `apps/simulator` | In progress (MVP-001) | 1 | Skeleton only so far (Phase 2) — SUMO/OpenStreetMap network build, traffic generation, and a runnable simulation land in Phases 3–5 |
+| `apps/simulator` | Implemented (MVP-001, closed) | 21 | Fetches a real OpenStreetMap extract, builds a routable SUMO network, generates synthetic traffic, runs headless or via `sumo-gui` — all through the `simulator` console command |
 
 ## Shared packages
 
@@ -30,10 +30,9 @@ Ruff, pytest, `pytest-cov`, pre-commit) is scaffolded — see `docs/architecture
 
 ## Test counts
 
-`apps/simulator`: 1 test (a package-importable smoke test, Phase 2). Coverage floor
-(`pyproject.toml`'s `fail_under = 50`) is still a placeholder — a real baseline is deferred
-to Phase 5, once the MVP is functionally complete (measuring it against today's trivial
-skeleton would be meaningless).
+`apps/simulator`: 21 tests, all mocked/deterministic (no live network, no live SUMO
+invocation). Coverage: 99.13% measured 2026-09-16 — floor set to 95% in `pyproject.toml`
+(`ADR-004`, `GAP-D1-COVERAGE` closed).
 
 ## Methodology compliance
 

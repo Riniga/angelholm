@@ -11,6 +11,9 @@ dependencies = [
     "sumolib==1.27.1",
 ]
 
+[project.scripts]
+simulator = "simulator.run:main"
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

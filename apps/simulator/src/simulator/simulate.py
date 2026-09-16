@@ -32,3 +32,13 @@ def run_headless(config_path: Path) -> None:
             f"sumo failed (exit {result.returncode}): {result.stderr.strip()}"
         )
     logger.info("Simulation completed successfully")
+
+
+def run_gui(config_path: Path) -> None:
+    """Launch `sumo-gui` for interactive, visual observation of the simulation.
+
+    Blocks until the GUI window is closed. Does not raise on a non-zero exit — closing the
+    window is a normal, expected way for this to end, not a failure to surface.
+    """
+    logger.info("Launching sumo-gui: %s", config_path)
+    subprocess.run(["sumo-gui", "-c", str(config_path)], check=False)

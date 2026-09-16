@@ -16,6 +16,9 @@ follow-up plans progress, and struck through (`~~GAP-ID~~`) when closed.
      first thing anyone (human or AI) should read to understand what's already done before
      starting new work on this area. -->
 
+- **2026-09-16** — MVP-001 Phase 5: closed `GAP-D1-COVERAGE` — real baseline measured
+  (99.13%), floor set to 95%. MVP-001 closed as delivered; see
+  `docs/mvp/001-first-traffic-simulator.md` "Outcome at close".
 - **2026-09-16** — MVP-001 Phase 2: closed `GAP-E2-CICHAIN` — fixed `ci.yml`'s 3 remaining
   `<placeholder>` bugs now that `apps/simulator` exists. Also caught and fixed a real,
   previously-masked bug found by actually running `pytest --cov`: `pytest-cov` was never
@@ -52,7 +55,7 @@ follow-up plans progress, and struck through (`~~GAP-ID~~`) when closed.
 |----|---------|-----|-------|-----------|--------|
 | ~~`GAP-D2-BRANCHPROTECT`~~ | D2 / F1 | ~~Branch protection on `main` not yet applied~~ — **closed 2026-09-16**: ruleset `main-protection` (id `23560670`) applied, bypass list empty, `current_user_can_bypass: "never"`. Required-approval-count is `0` not `1` — documented as `EX-001`, not a failure of this gap. Only 3 of 6 CI jobs are required status checks (the other 3 wait on `GAP-E2-CICHAIN`, tracked there, not here). | owner | `docs/plans/000-workspace-foundation.plan.md` Phase 4 | closed |
 | ~~`GAP-E2-CICHAIN`~~ | E2 | ~~3 of `ci.yml`'s 6 jobs fail on placeholder text~~ — **closed 2026-09-16** (MVP-001 Phase 2): all 3 remaining `<placeholder>`s in `ci.yml` fixed (`Run tests`' install step → `apps/simulator`, `SAST`'s `--error` → `apps`, `Dependencies`' `--ignore-packages` → `simulator`) now that `apps/simulator` exists to give them real values. Verified locally (ruff, pytest-cov) but **not yet confirmed green on a real GitHub Actions run** — add the remaining 3 jobs as required status checks on the `main-protection` ruleset only after seeing them pass for real on a PR, per `docs/development/repo-settings.md`'s own guidance. | platform | `docs/plans/001-first-traffic-simulator.plan.md` Phase 2 | closed |
-| `GAP-D1-COVERAGE` | D1 | No functioning coverage gate — `pyproject.toml`'s `fail_under = 50` is an explicit placeholder, not a value derived from a measured baseline, because no application code exists yet to measure. Policy shape already decided (ADR-004); only the number is missing. | platform | `docs/plans/001-first-traffic-simulator.plan.md` (measure once real code exists) | open |
+| ~~`GAP-D1-COVERAGE`~~ | D1 | ~~No functioning coverage gate~~ — **closed 2026-09-16** (MVP-001 Phase 5): real baseline measured (`apps/simulator`, 99.13%), floor set to 95% in `pyproject.toml`. See `interpretations.md` §3. | platform | `docs/plans/001-first-traffic-simulator.plan.md` (measure once real code exists) | closed |
 
 ### Severity M
 
