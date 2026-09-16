@@ -7,26 +7,26 @@ import subprocess
 import sys
 from pathlib import Path
 
+from simulator._paths import sumo_tools_dir
+
 logger = logging.getLogger(__name__)
 
-# Central Ängelholm — verified during MVP-001 planning (ADR-006) to contain real road data
-# (87 highway ways via a live Overpass query). west, south, east, north.
-DEFAULT_BBOX: tuple[float, float, float, float] = (12.8580, 56.2430, 12.8660, 56.2470)
-# Alternate candidate area, not yet verified/switched to — a different neighbourhood of
-# Ängelholm to try later if this one's network turns out too small/large in practice.
-# DEFAULT_BBOX: tuple[float, float, float, float] = (12.845580, 56.253877, 12.860379, 56.247082)
+# A neighbourhood of central Ängelholm. west, south, east, north — south must be the
+# smaller latitude (osmGet.py validates this and rejects an inverted bbox for real).
+# Original MVP-001 candidate, verified to contain real road data (87 highway ways via a
+# live Overpass query) but no longer the active default:
+# DEFAULT_BBOX: tuple[float, float, float, float] = (12.8580, 56.2430, 12.8660, 56.2470)
+DEFAULT_BBOX: tuple[float, float, float, float] = (
+    12.845580,
+    56.247082,
+    12.860379,
+    56.253877,
+)
 DEFAULT_PREFIX = "angelholm"
 
 
 class NetworkBuildError(RuntimeError):
     """Raised when fetching OSM data or building the SUMO network fails."""
-
-
-def _sumo_tools_dir() -> Path:
-    """Locate the `tools/` directory bundled with the installed `eclipse-sumo` package."""
-    import sumo
-
-    return Path(sumo.__file__).parent / "tools"
 
 
 def fetch_osm_extract(
@@ -40,7 +40,7 @@ def fetch_osm_extract(
     hand-rolled query. Returns the path to the downloaded `<prefix>_bbox.osm.xml` file.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    osm_get_script = _sumo_tools_dir() / "osmGet.py"
+    osm_get_script = sumo_tools_dir() / "osmGet.py"
     bbox_arg = ",".join(str(v) for v in bbox)
 
     logger.info("Fetching OSM extract for bbox=%s into %s", bbox_arg, output_dir)

@@ -65,21 +65,27 @@ These capabilities belong in later MVPs. The purpose of MVP-001 is only to estab
 
 ## Outcome at close (2026-09-16)
 
-Closed as **delivered** — all six criteria met, each verified for real, not asserted:
+Closed as **delivered** — all six criteria met, each verified for real, not asserted.
 
 * **A real-world road network for the selected area is loaded into the simulation.** Met.
-  A real OpenStreetMap extract for a verified bbox in central Ängelholm (confirmed against
-  Google Maps by the project owner), converted via `netconvert` into a network — **241
-  edges, 120 junctions** — loaded back and checked via `sumolib`.
+  A real OpenStreetMap extract for a neighbourhood of central Ängelholm, converted via
+  `netconvert` into a network — **519 edges, 227 junctions** — loaded back and checked via
+  `sumolib`. (The area was corrected during PR prep after an invalid, inverted-latitude
+  bbox was caught for real by `osmGet.py`'s own validation — see "Real bugs" below. The
+  original, smaller area — 241 edges, 120 junctions — was the one visually confirmed by
+  the project owner against Google Maps; see the GUI note below.)
 * **At least 10 vehicles can be simulated simultaneously.** Met. **14 vehicles**, fixed
   `seed=42` for reproducibility, verified programmatically (not just eyeballed).
 * **Vehicles follow valid routes through the road network.** Met. Routed via `duarouter`
   (through `randomTrips.py --validate`), not raw origin-destination pairs.
 * **The simulation can be observed visually while it is running.** Met — confirmed
-  directly by the project owner in `sumo-gui`. One real usability issue found and fixed
-  along the way: the default playback ran 200 simulated seconds in a couple of real
-  seconds, too fast to actually watch — a `<gui_only><delay value="200"/></gui_only>`
-  section in the generated `.sumocfg` fixed this (ignored by headless `sumo`, confirmed).
+  directly by the project owner in `sumo-gui`, first for the original area (including
+  matching it against Google Maps as real central Ängelholm) and again after the bbox
+  correction, against the final area (519 edges, 227 junctions). One real usability issue
+  found and fixed along the way: the default playback ran 200 simulated seconds in a
+  couple of real seconds, too fast to actually watch — a
+  `<gui_only><delay value="200"/></gui_only>` section in the generated `.sumocfg` fixed
+  this (ignored by headless `sumo`, confirmed).
 * **The simulation reaches completion without manual intervention or simulation errors.**
   Met. `simulator.simulate.run_headless()` confirmed `"Simulation completed successfully"`
   for real, multiple times.
@@ -101,8 +107,14 @@ written:**
   earlier for an unrelated reason. Added as a real dependency.
 * `ci.yml` had 3 remaining `<placeholder>` bugs (`GAP-E2-CICHAIN`) causing a shell syntax
   error on every run, closed once `apps/simulator` existed to give them real values.
-* A committed OSM fixture (547 KB) tripped `check-added-large-files`' 500 KB default —
+* A committed OSM fixture (~537 KB) tripped `check-added-large-files`' 500 KB default —
   raised to 600 KB, documented, not disabled.
+* (During PR prep, after this MVP first closed) A replacement bbox had its south/north
+  latitude values inverted — `osmGet.py` itself rejected it for real
+  (`error: Invalid geocoordinates in bbox.`), not a guess. Fixed by swapping the values;
+  also discovered `check-added-large-files` only checks newly-*added* files, not size
+  growth in already-tracked ones — the corrected network (~1.0 MB, up from 379 KB) sailed
+  through the hook unchecked.
 
 **Also closed while at it:** `GAP-D1-COVERAGE` — a real coverage baseline (99.13%) was
 measured once the MVP was functionally complete, and the floor set to 95% (`ADR-004`).

@@ -125,17 +125,26 @@ intervention or errors — matching every acceptance criterion in
 - [x] Script the Overpass fetch for the verified bbox. Result: used SUMO's own official
   `osmGet.py` tool (not a hand-rolled query) via `simulator.network.fetch_osm_extract()`.
   **Decision: commit the extract as a fixture** (`apps/simulator/data/angelholm_bbox.osm.xml`,
-  547 KB) — per the plan's default recommendation and "Scenarios Should Be Reproducible".
+  ~537 KB) — per the plan's default recommendation and "Scenarios Should Be Reproducible".
   Real, non-obvious finding: the public Overpass server returned a genuine `HTTP 504
   Gateway Timeout` on the first attempt — added `--retries 5 --retry-delay 10` to the
   function as a result, not just a one-off manual retry.
 - [x] Run `netconvert --osm-files <file> -o network.net.xml` via
-  `simulator.network.build_network()`. Result: clean exit (`Success.`), 379 KB network.
+  `simulator.network.build_network()`. Result: clean exit (`Success.`); final (corrected
+  bbox) network is ~1.0 MB, larger than the original area's 379 KB — a denser road area.
   Real warnings appeared (unrelated PT-line/waterway edge cases from data extending past
   the small bbox) — expected and handled gracefully by `netconvert` itself, not a road
   network problem; not worth suppressing or treating as a failure.
-- [x] Sanity-check the resulting network. Result: loads via `sumolib.net.readNet` — **241
-  edges, 120 junctions**, both `> 0`, confirmed for real.
+- [x] Sanity-check the resulting network. Result: loads via `sumolib.net.readNet` — **519
+  edges, 227 junctions**, both `> 0`, confirmed for real.
+
+**Post-close correction (during PR prep):** the active area was changed to a different
+neighbourhood of Ängelholm. The replacement bbox as first entered had **inverted
+south/north values** — `osmGet.py` itself rejected it for real
+(`error: Invalid geocoordinates in bbox.`), not a guess. Fixed by swapping the two
+latitude values; re-ran Phases 3–4 end-to-end against the corrected bbox (numbers above
+are the corrected, final ones). The original bbox is kept as a commented-out, labelled
+alternative in `network.py`.
 
 ### Phase 4: Generate traffic and run the simulation
 
@@ -151,10 +160,15 @@ intervention or errors — matching every acceptance criterion in
 - [x] Verify headless `sumo -c <config>` runs to completion with no errors, via
   `simulator.simulate.run_headless()`. Result: ran for real — **"Simulation completed
   successfully."**
-- [ ] **Manual step, needs the user**: open `apps/simulator/data/angelholm.sumocfg` in
-  `sumo-gui` and confirm the network and moving vehicles are visible — cannot be verified
-  from this session (no display). The route/config files are regenerated on demand (not
-  committed — see `.gitignore`), currently present on disk from this session's real run.
+- [x] **Manual step, needed the user**: open `apps/simulator/data/angelholm.sumocfg` in
+  `sumo-gui` and confirm the network and moving vehicles are visible. Result (original
+  bbox): confirmed by the project owner directly — also confirmed the area itself against
+  Google Maps as real central Ängelholm. Surfaced a real usability bug in the process
+  (default playback too fast to watch) — fixed with the `<gui_only><delay>` setting (see
+  Phase 5).
+  **Re-confirmed after the bbox correction**: the project owner opened the corrected
+  simulation in `sumo-gui` again and confirmed it looks correct (519 edges, 227
+  junctions).
 
 Also decided: `.rou.xml`/`.sumocfg` are cheap, deterministic outputs of our own code run
 against the already-committed network (fixed seed) — unlike the OSM extract, not worth
@@ -183,18 +197,19 @@ regenerates them each run.
 
 ## 5. Risks / open questions
 
-- **Licence allow-list**: this plan cannot resolve whether EPL-2.0/GPL-2.0-or-later is
-  acceptable for this project — that needs the user (or whoever owns licence policy here)
-  to decide and record it in `docs/standards/dependencies.md`, per its own exception
-  process. Blocking for Phase 1/CI, not something to route around.
-- **GUI verification** is inherently manual — no amount of automation in this session
-  substitutes for the user actually watching `sumo-gui` run.
-- **OSM extract reproducibility**: committing a data snapshot vs. fetching live each run is
-  a real trade-off (offline/reproducible vs. always-current); Phase 3 proposes committing a
-  snapshot as the default, open to being overridden.
-- The bbox is a verified-real but still first-pass choice — if the user wants a different,
-  more recognizable area of Ängelholm, that's a cheap change before Phase 3 runs the fetch,
-  not after.
+All resolved by close, except the last:
+
+- ~~Licence allow-list~~ — resolved: approved by the project owner 2026-09-16.
+- ~~GUI verification~~ — resolved: confirmed by the project owner directly in `sumo-gui`.
+- ~~OSM extract reproducibility~~ — resolved: committed as a fixture, per the default
+  recommendation.
+- ~~The bbox is a first-pass choice~~ — resolved: confirmed correct by the project owner
+  against Google Maps (central Ängelholm).
 - `apps/simulator/pyproject.toml`'s shape (dependencies section, entry points) hasn't been
   precedented anywhere in this repo yet — this plan is also implicitly setting the pattern
-  the next app will copy; worth a second look before merging for exactly that reason.
+  the next app will copy; worth a second look from a reviewer for exactly that reason. Not
+  resolved by this plan itself — a review-time consideration, not a blocker.
+- New, not anticipated when this plan was written: the 3 CI jobs `GAP-E2-CICHAIN` fixed
+  (`SAST`, `Dependencies`, `Run tests`) are only verified locally, not yet confirmed green
+  on a real GitHub Actions run — worth watching on this PR before adding them as required
+  status checks.

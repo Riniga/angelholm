@@ -30,7 +30,7 @@ Ruff, pytest, `pytest-cov`, pre-commit) is scaffolded — see `docs/architecture
 
 ## Test counts
 
-`apps/simulator`: 21 tests, all mocked/deterministic (no live network, no live SUMO
+`apps/simulator`: 22 tests, all mocked/deterministic (no live network, no live SUMO
 invocation). Coverage: 99.13% measured 2026-09-16 — floor set to 95% in `pyproject.toml`
 (`ADR-004`, `GAP-D1-COVERAGE` closed).
 

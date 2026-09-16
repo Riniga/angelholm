@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from simulator._paths import sumo_tools_dir
+
 logger = logging.getLogger(__name__)
 
 MIN_VEHICLES = 10
@@ -27,13 +29,6 @@ class TrafficGenerationError(RuntimeError):
     """Raised when generating traffic or writing the simulation config fails."""
 
 
-def _sumo_tools_dir() -> Path:
-    """Locate the `tools/` directory bundled with the installed `eclipse-sumo` package."""
-    import sumo
-
-    return Path(sumo.__file__).parent / "tools"
-
-
 def generate_traffic(
     net_file: Path,
     route_file: Path,
@@ -49,7 +44,7 @@ def generate_traffic(
     fewer than `MIN_VEHICLES` vehicles end up in the resulting route file.
     """
     route_file.parent.mkdir(parents=True, exist_ok=True)
-    random_trips_script = _sumo_tools_dir() / "randomTrips.py"
+    random_trips_script = sumo_tools_dir() / "randomTrips.py"
     # Without an explicit -o, randomTrips.py drops its intermediate trip file as
     # trips.trips.xml in the current working directory rather than next to route_file —
     # found by actually running this, not documented behaviour. Pin it explicitly.

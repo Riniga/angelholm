@@ -29,7 +29,11 @@ Checked for real, not assumed:
 - A live Overpass API query for a real, small bounding box in central Ängelholm
   (`56.2430,12.8580` to `56.2470,12.8660`) returned 87 real highway ways — confirms
   OpenStreetMap/Overpass access works from this environment and that specific area has
-  enough substance for a first MVP network.
+  enough substance for a first MVP network. (That specific bbox was `network.py`'s
+  `DEFAULT_BBOX` when this ADR was written; a different neighbourhood of Ängelholm was
+  switched to afterward — see `docs/mvp/001-first-traffic-simulator.md`'s Outcome at
+  close for the area actually shipped. This ADR's decision — SUMO + OpenStreetMap as the
+  technology choice — doesn't depend on which specific bbox is active.)
 - `pip-licenses` reports the exact licence string `EPL-2.0 OR GPL-2.0-or-later` for all
   four SUMO-related packages — not on the CI licence allow-list beforehand. Approved by the
   project owner 2026-09-16 (see `docs/standards/dependencies.md`'s updated allow-list and
