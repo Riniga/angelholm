@@ -17,11 +17,13 @@ This workspace contains an urban mobility simulation project for modelling how p
 
 The project is intended to provide an experimental environment where infrastructure and traffic conditions can be changed and the resulting effects on mobility can be simulated, measured and compared. See [`docs/vision.md`](../vision.md) for the full purpose and principles, and [`docs/roadmap.md`](../roadmap.md) for the planned delivery stages (R0–R5).
 
-**Both MVPs so far are complete.** `apps/simulator` (MVP-001) is a real, working
-application — fetches OpenStreetMap data, builds a routable SUMO network, generates
-traffic, and runs the simulation headless or via `sumo-gui`, all through the `simulator`
-console command. MVP-000 (workspace foundation: ADRs, methodology-compliance baseline,
-repo settings) closed first and MVP-001 built on top of it. The repository was initialised
+**All three MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002) is
+a real, working application — fetches OpenStreetMap data, builds a routable SUMO network
+clipped to a hand-drawn coverage outline, generates traffic, and runs the simulation
+headless or via `sumo-gui`, all through the `simulator` console command. MVP-000 (workspace
+foundation: ADRs, methodology-compliance baseline, repo settings) closed first and MVP-001
+built on top of it, with MVP-002 growing the covered area afterward. The repository was
+initialised
 from a generic, organisation-wide reference skeleton (referred to in the repository as a
 "grundplåt"); its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) were fully carried out and
 the file deleted, per its own instruction, before either MVP began. No `packages/` exists
@@ -102,34 +104,41 @@ structure should be updated in the same PR as any further change to it.
 
 ## Major Components
 
-Two components have a first, minimal, real implementation (`apps/simulator`, MVP-001). The
-rest are architectural responsibilities identified from `docs/vision.md`, not yet built.
+Two components have a first, real implementation (`apps/simulator`, MVP-001, extended by
+MVP-002). The rest are architectural responsibilities identified from `docs/vision.md`, not
+yet built.
 
 ### Geographic Model
 
-**Implemented (minimal), MVP-001.** `simulator.network.fetch_osm_extract()` downloads a
-real OpenStreetMap extract (via SUMO's own `osmGet.py`) for a small, verified area of
-central Ängelholm — see `ADR-006`. Committed as a fixture:
-`apps/simulator/data/angelholm_bbox.osm.xml`.
+**Implemented, MVP-001 + MVP-002.** `simulator.network.fetch_osm_extract()` downloads a
+real OpenStreetMap extract (via SUMO's own `osmGet.py`) for the outlined central-Ängelholm
+coverage area (`docs/architecture/mapoutline.png`) — see `ADR-006`. Committed as a fixture:
+`apps/simulator/data/angelholm_bbox.osm.xml`. `simulator.network.load_boundary_polygon()`
+loads a digitized version of that hand-drawn outline
+(`apps/simulator/data/coverage-outline.geojson`, `ADR-007`) so the network build clips to
+the actual outline shape, not just its bounding box.
 
 Covered so far: roads, intersections, lanes/permitted modes as encoded in OSM way tags —
 whatever `netconvert` extracts from raw OSM XML. Not yet covered (see "Domain / product"
 below): dedicated handling of pedestrian/bicycle infrastructure, speed-limit overrides
-beyond OSM defaults, non-road geographic features (buildings, water, parks).
+beyond OSM defaults, non-road geographic features (buildings, water, parks — planned next,
+`docs/mvp/003-map-context-features.md`).
 
 ### Mobility Simulation
 
-**Implemented (minimal), MVP-001.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly
+**Implemented, MVP-001 + MVP-002.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly
 pinned — `ADR-006`) is the simulation engine, not just a candidate anymore.
 `simulator.network.build_network()` converts the OSM extract into a routable network via
-`netconvert` (verified for real: 519 edges, 227 junctions);
+`netconvert`, clipped to the coverage outline via `--keep-edges.in-geo-boundary`
+(verified for real: 4,250 edges, 1,756 junctions, up from MVP-001's original 519/227);
 `simulator.traffic.generate_traffic()` + `simulator.simulate.run_headless()`/`run_gui()`
 generate synthetic vehicle trips and run the simulation, headless or interactive.
 
 Covered so far: vehicle movement, routing, traffic interactions, running to completion —
-all for a single, small area over a short simulated time window. Not yet covered:
+for the outlined coverage area over a short simulated time window. Not yet covered:
 pedestrian/bicycle movement, traffic signals as a distinct concern, congestion analysis,
-dynamic network changes (all explicitly out of MVP-001's scope, see its own document).
+dynamic network changes (out of scope for both MVP-001 and MVP-002, see their own
+documents).
 
 ### Population and Travel Demand
 
