@@ -229,6 +229,25 @@ class TestGenerateBicycleTraffic:
         assert "--vehicle-class" in argv
         assert argv[argv.index("--vehicle-class") + 1] == "bicycle"
 
+    def test_argv_prefixes_ids_to_avoid_colliding_with_cars(
+        self, tmp_path: Path
+    ) -> None:
+        net_file = tmp_path / "network.net.xml"
+        route_file = tmp_path / "bikes.rou.xml"
+
+        def fake_run(*args, **kwargs):
+            route_file.write_text(_route_file_with_vehicles(MIN_BICYCLES + 4))
+            return _completed(0)
+
+        with patch(
+            "simulator.traffic.subprocess.run", side_effect=fake_run
+        ) as mock_run:
+            generate_bicycle_traffic(net_file, route_file)
+
+        argv = mock_run.call_args.args[0]
+        assert "--prefix" in argv
+        assert argv[argv.index("--prefix") + 1] == "bike_"
+
     def test_too_few_bicycles_raises_traffic_generation_error(
         self, tmp_path: Path
     ) -> None:
@@ -275,6 +294,23 @@ class TestGeneratePedestrianTraffic:
 
         argv = mock_run.call_args.args[0]
         assert "--persontrips" in argv
+
+    def test_argv_prefixes_ids(self, tmp_path: Path) -> None:
+        net_file = tmp_path / "network.net.xml"
+        route_file = tmp_path / "peds.rou.xml"
+
+        def fake_run(*args, **kwargs):
+            route_file.write_text(_route_file_with_persons(MIN_PEDESTRIANS + 4))
+            return _completed(0)
+
+        with patch(
+            "simulator.traffic.subprocess.run", side_effect=fake_run
+        ) as mock_run:
+            generate_pedestrian_traffic(net_file, route_file)
+
+        argv = mock_run.call_args.args[0]
+        assert "--prefix" in argv
+        assert argv[argv.index("--prefix") + 1] == "ped_"
 
     def test_too_few_pedestrians_raises_traffic_generation_error(
         self, tmp_path: Path

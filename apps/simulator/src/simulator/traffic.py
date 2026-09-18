@@ -226,7 +226,11 @@ def generate_bicycle_traffic(
         end=end,
         period=period,
         seed=seed,
-        extra_args=["--vehicle-class", "bicycle"],
+        # --prefix: cars are also <vehicle> elements with unprefixed ids ("0", "1", ...) —
+        # without a distinct prefix here, loading both route files together in one
+        # .sumocfg collides on id "0" and sumo refuses to start. Found by actually running
+        # the combined simulation, not anticipated from either mode's docs.
+        extra_args=["--vehicle-class", "bicycle", "--prefix", "bike_"],
         min_count=MIN_BICYCLES,
         count_tag="<vehicle ",
         mode_label="bicycle",
@@ -252,7 +256,7 @@ def generate_pedestrian_traffic(
         end=end,
         period=period,
         seed=seed,
-        extra_args=["--persontrips"],
+        extra_args=["--persontrips", "--prefix", "ped_"],
         min_count=MIN_PEDESTRIANS,
         count_tag="<person ",
         mode_label="pedestrian",
