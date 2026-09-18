@@ -189,7 +189,7 @@ originally expected.
 
 ### Runtime
 
-`apps/simulator` (MVP-001) depends on:
+`apps/simulator` (MVP-001, extended by MVP-002) depends on:
 
 * **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly pinned to `1.27.1`) — the mobility
   simulation engine. `ADR-006` records the choice, including a real gotcha: conda-forge's
@@ -200,13 +200,18 @@ originally expected.
   separate pip dependency, bundled with `eclipse-sumo`'s `tools/`.
 * **`sumo-data`** — pulled in automatically as `eclipse-sumo`'s own transitive dependency
   (bundled default templates), not something this project chose to depend on directly.
+* **`shapely`** (`>=2.0,<3`, MVP-002) — represents and validates the coverage-outline
+  polygon (`simulator.network.load_boundary_polygon`) used to clip the built network to
+  `docs/architecture/mapoutline.png`'s outline via `netconvert
+  --keep-edges.in-geo-boundary`, rather than just a bounding box. `ADR-007` records the
+  choice.
 
 ### Development / tooling dependencies
 
 The **tooling** dependency surface, now exercised against real code (`apps/simulator`):
 
 * `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, verified not to have drifted from `requirements.in`.
-* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps), `pre-commit>=3,<5`, `pytest-cov>=5,<7` (added MVP-001 Phase 2 — was referenced by `testing.md`/`ci.yml` but never actually installed until then), and the SUMO toolchain above.
+* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps), `pre-commit>=3,<5`, `pytest-cov>=5,<7` (added MVP-001 Phase 2 — was referenced by `testing.md`/`ci.yml` but never actually installed until then), the SUMO toolchain above, `shapely` (also a real `simulator` runtime dependency, listed above), and `numpy`/`opencv-python-headless` (MVP-002, tooling-only — used once by `scripts/extract_coverage_outline.py` to digitize the coverage outline from a raster image; not imported by `simulator` itself).
 * `pyproject.toml` — `[tool.ruff]` (formatter/linter config, `known-first-party = ["simulator"]`) and `[tool.coverage]` (coverage gate, `source = ["apps/simulator/src"]`); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. `fail_under = 95` — a real, measured baseline (99%+ on `apps/simulator`), not a placeholder any longer (`ADR-004`, `GAP-D1-COVERAGE` closed).
 * `pytest.ini` — `testpaths = apps/simulator/tests`.
 * `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files` (threshold raised to 600 KB, documented, for the committed OSM fixture), and `detect-secrets`.

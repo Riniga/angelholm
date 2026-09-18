@@ -2,6 +2,9 @@
 
 Implements [`docs/mvp/002-extended-map-area.md`](../mvp/002-extended-map-area.md).
 
+**Status:** Complete — all 4 phases done, MVP closed 2026-09-18 as delivered. See the
+MVP's "Outcome at close" for verification detail.
+
 ## 1. Goal
 
 Replace MVP-001's small neighbourhood network with a routable SUMO network covering the
