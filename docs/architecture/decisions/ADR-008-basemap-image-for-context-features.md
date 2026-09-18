@@ -98,9 +98,11 @@ one-off GIF→PNG conversion script, not a `simulator` runtime dependency.
 - Loses any notion of "shape type" the road network could otherwise query — this was
   already true of the rejected rendered-image approach, but doubly true here: the
   background is one flat picture, not even self-drawn shapes.
-- `apps/simulator/data/context-background.png` is committed and reasonably large
-  (~1.7 MB) — `check-added-large-files`' threshold was raised again (600 KB → 2000 KB,
-  `.pre-commit-config.yaml`), the same documented pattern as MVP-001's OSM fixture.
+- `apps/simulator/data/context-background.png` (~1.7 MB) and the project owner's other
+  committed map reference images/PSD (`docs/architecture/map*.gif`, `map.psd`, ~8.3 MB
+  combined) are real weight added to the repo — `check-added-large-files`' threshold was
+  raised twice more (600 KB → 2000 KB → 6500 KB, `.pre-commit-config.yaml`), the same
+  documented pattern as MVP-001's OSM fixture.
 
 ## Alternatives considered
 

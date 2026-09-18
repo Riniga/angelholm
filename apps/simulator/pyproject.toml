@@ -1,7 +1,7 @@
 [project]
 name = "simulator"
 version = "0.1.0"
-description = "Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002) — imports OpenStreetMap data, builds a routable SUMO network clipped to a coverage outline, and runs a repeatable simulation."
+description = "Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002/003) — imports OpenStreetMap data, builds a routable SUMO network clipped to a coverage outline, shows a real basemap image for visual context, and runs a repeatable simulation."
 requires-python = ">=3.13"
 # Exact pins, matching requirements.in's reasoning: traci/sumolib are thin Python APIs over
 # the eclipse-sumo binaries and must match the engine version they talk to. See ADR-006.
