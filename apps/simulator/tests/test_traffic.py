@@ -104,24 +104,3 @@ class TestWriteSumocfg:
 
         content = config_path.read_text(encoding="utf-8")
         assert "../data/network.net.xml" in content.replace("\\", "/")
-
-    def test_no_additional_files_omits_the_element(self, tmp_path: Path) -> None:
-        net_file = tmp_path / "network.net.xml"
-        route_file = tmp_path / "routes.rou.xml"
-        config_path = tmp_path / "sim.sumocfg"
-
-        write_sumocfg(net_file, route_file, config_path)
-
-        content = config_path.read_text(encoding="utf-8")
-        assert "additional-files" not in content
-
-    def test_additional_files_adds_the_element(self, tmp_path: Path) -> None:
-        net_file = tmp_path / "network.net.xml"
-        route_file = tmp_path / "routes.rou.xml"
-        config_path = tmp_path / "sim.sumocfg"
-        poly_file = tmp_path / "angelholm.poly.xml"
-
-        write_sumocfg(net_file, route_file, config_path, additional_files=poly_file)
-
-        content = config_path.read_text(encoding="utf-8")
-        assert 'additional-files value="angelholm.poly.xml"' in content

@@ -24,9 +24,11 @@ reports/
 apps/simulator/data/*.rou.xml
 apps/simulator/data/*.sumocfg
 apps/simulator/data/*.trips.xml
-# MVP-003: map context shapes, deterministic from the already-committed network/OSM
-# extract via polyconvert — same reasoning as the routes/.sumocfg above.
-apps/simulator/data/*.poly.xml
+# MVP-003: the GUI-settings XML embeds computed network coordinates, so it's regenerated
+# on demand like routes/.sumocfg above. The background image itself
+# (apps/simulator/data/context-background.png) is a static, committed asset, not
+# regenerated — not gitignored.
+apps/simulator/data/*-guisettings.xml
 
 # IDE
 .vscode/

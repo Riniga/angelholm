@@ -12,6 +12,9 @@ dependencies = [
     # MVP-002: polygon-based coverage-outline clipping in simulator.network — see
     # requirements.in and ADR-007.
     "shapely>=2.0,<3",
+    # MVP-003: converts the project owner's basemap image corners into network
+    # coordinates in simulator.context_features — see requirements.in and ADR-008.
+    "pyproj>=3.6,<4",
 ]
 
 [project.scripts]

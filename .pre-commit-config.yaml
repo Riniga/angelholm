@@ -25,13 +25,18 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         # Default is 500 KB; MVP-001's committed OpenStreetMap data fixture
-        # (apps/simulator/data/angelholm_bbox.osm.xml, ~537 KB as of 2026-09-16) is a
-        # real, reviewed exception — raised modestly, not removed, so this still catches
-        # a genuinely oversized accidental commit elsewhere. Note: this hook only checks
-        # newly-added files, not size growth in already-tracked ones (confirmed for real
-        # when network.net.xml grew past 1 MB on a later bbox change and this hook didn't
-        # catch it) — it is not a full safety net against a fixture growing over time.
-        args: ['--maxkb=600']
+        # (apps/simulator/data/angelholm_bbox.osm.xml, ~537 KB as of 2026-09-16) raised
+        # this to 600 KB. MVP-003's committed background map image
+        # (apps/simulator/data/context-background.png, ~1.7 MB) raised it to 2000 KB, then
+        # its Photoshop source (docs/architecture/map.psd, ~5.9 MB, kept as reference
+        # material alongside the project owner's other map reference images) raised it
+        # again to 6500 KB — all real, reviewed exceptions, raised modestly rather than
+        # removed, so this still catches a genuinely oversized accidental commit
+        # elsewhere. Note: this hook only checks newly-added files, not size growth in
+        # already-tracked ones (confirmed for real when network.net.xml grew past 1 MB on
+        # a later bbox change and this hook didn't catch it) — it is not a full safety net
+        # against a fixture growing over time.
+        args: ['--maxkb=6500']
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

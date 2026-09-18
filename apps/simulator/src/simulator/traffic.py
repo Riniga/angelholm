@@ -105,34 +105,24 @@ def write_sumocfg(
     begin: int = DEFAULT_BEGIN,
     end: int = DEFAULT_END,
     delay_ms: int = DEFAULT_DELAY_MS,
-    additional_files: Path | None = None,
 ) -> Path:
     """Write a `.sumocfg` tying `net_file` and `route_file` together.
 
     Paths are written relative to `config_path`'s own directory, since that's how SUMO
-    resolves them at run time — the files don't have to live in the same directory.
+    resolves them at run time — the two files don't have to live in the same directory.
     `delay_ms` sets `sumo-gui`'s default per-step animation delay so a human can actually
     watch it run; headless `sumo` (used by `run_headless()`) ignores this `<gui_only>`
-    setting entirely, so it has no effect on the automated acceptance check. When
-    `additional_files` is given (e.g. MVP-003's map context shapes), it is referenced
-    alongside `net-file`/`route-files` — purely for `sumo-gui`'s display, ignored by the
-    simulation engine's own computation.
+    setting entirely, so it has no effect on the automated acceptance check.
     """
     config_path.parent.mkdir(parents=True, exist_ok=True)
     net_rel = os.path.relpath(net_file, start=config_path.parent)
     route_rel = os.path.relpath(route_file, start=config_path.parent)
-    additional_files_line = ""
-    if additional_files is not None:
-        additional_rel = os.path.relpath(additional_files, start=config_path.parent)
-        additional_files_line = (
-            f'\n        <additional-files value="{additional_rel}"/>'
-        )
     config_path.write_text(
         f"""<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <input>
         <net-file value="{net_rel}"/>
-        <route-files value="{route_rel}"/>{additional_files_line}
+        <route-files value="{route_rel}"/>
     </input>
     <time>
         <begin value="{begin}"/>
