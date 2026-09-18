@@ -115,6 +115,24 @@ class TestBuildNetwork:
         argv = mock_run.call_args.args[0]
         assert "--keep-edges.in-geo-boundary" not in argv
 
+    def test_argv_requests_street_names(self, tmp_path: Path) -> None:
+        # MVP-004: needed to identify real, named entry/exit roads by hand.
+        osm_file = tmp_path / "extract.osm.xml"
+        osm_file.write_text("<osm/>")
+        output_path = tmp_path / "network.net.xml"
+
+        def fake_run(*args, **kwargs):
+            output_path.write_text("<net/>")
+            return _completed(0)
+
+        with patch(
+            "simulator.network.subprocess.run", side_effect=fake_run
+        ) as mock_run:
+            build_network(osm_file, output_path)
+
+        argv = mock_run.call_args.args[0]
+        assert "--output.street-names" in argv
+
     def test_boundary_polygon_adds_geo_boundary_flag(self, tmp_path: Path) -> None:
         osm_file = tmp_path / "extract.osm.xml"
         osm_file.write_text("<osm/>")

@@ -108,13 +108,23 @@ def build_network(
     When `boundary_polygon` is given (a `"lon0,lat0,lon1,lat1,..."` string, e.g. from
     `load_boundary_polygon()`), edges outside that outline are dropped via
     `--keep-edges.in-geo-boundary`, on top of whatever bbox the OSM extract itself covers.
+    `--output.street-names` carries real OSM street names onto edges (purely additive
+    metadata — MVP-004 needs it to identify real, named entry/exit roads by hand rather
+    than guessing from edge IDs; does not affect edge/junction counts or topology).
 
     Returns `output_path` on success; raises `NetworkBuildError` on failure or if
     `netconvert` reports no edges/junctions were built.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    command = ["netconvert", "--osm-files", str(osm_file), "-o", str(output_path)]
+    command = [
+        "netconvert",
+        "--osm-files",
+        str(osm_file),
+        "-o",
+        str(output_path),
+        "--output.street-names",
+    ]
     if boundary_polygon is not None:
         command += ["--keep-edges.in-geo-boundary", boundary_polygon]
 
