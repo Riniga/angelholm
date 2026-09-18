@@ -110,7 +110,9 @@ def pixel_to_lonlat(
     return lon, lat
 
 
-def build_polygon(contour_px: np.ndarray, image_width: int, image_height: int) -> Polygon:
+def build_polygon(
+    contour_px: np.ndarray, image_width: int, image_height: int
+) -> Polygon:
     vertices_lonlat = [
         pixel_to_lonlat(px, py, image_width, image_height) for px, py in contour_px
     ]

@@ -1,5 +1,6 @@
-"""Documented, repeatable entrypoint: build (if needed) and run the first Ängelholm
-traffic simulation (MVP-001).
+"""Documented, repeatable entrypoint: build (if needed) and run the Ängelholm traffic
+simulation, covering the area outlined in docs/architecture/mapoutline.png (MVP-002; grown
+from MVP-001's original, smaller neighbourhood extract).
 
 Installed as the `simulator` console command (`pip install -e apps/simulator`):
 
@@ -14,7 +15,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from simulator.network import build_network, fetch_osm_extract
+from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
 from simulator.simulate import run_gui, run_headless
 from simulator.traffic import generate_traffic, write_sumocfg
 
@@ -27,7 +28,7 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 def main(argv: list[str] | None = None) -> int:
     """Parse arguments and run the simulation pipeline. Returns a process exit code."""
     parser = argparse.ArgumentParser(
-        description="Run the first Ängelholm traffic simulation (MVP-001)."
+        description="Run the Ängelholm traffic simulation."
     )
     parser.add_argument(
         "--headless",
@@ -46,7 +47,8 @@ def main(argv: list[str] | None = None) -> int:
     net_file = DATA_DIR / "network.net.xml"
     if args.rebuild_network or not net_file.exists():
         osm_file = fetch_osm_extract(DATA_DIR)
-        build_network(osm_file, net_file)
+        boundary_polygon = load_boundary_polygon(DATA_DIR / "coverage-outline.geojson")
+        build_network(osm_file, net_file, boundary_polygon=boundary_polygon)
 
     route_file = DATA_DIR / "angelholm.rou.xml"
     config_file = DATA_DIR / "angelholm.sumocfg"
