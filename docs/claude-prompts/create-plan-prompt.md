@@ -2,7 +2,7 @@
 
 ## Prompt
 
-Create all implementation plans for MVP:  `docs/mvp/001-first-traffic-simulator.md`
+Create all implementation plans for MVP:  `docs/mvp/002-extended-map-area.md`
 
 Requirements:
 
@@ -18,7 +18,7 @@ Output format:
 4. Step-by-step TODO grouped into phases
 5. Risks / open questions
 
-Save the plan in the folder: `docs/plans/001-first-traffic-simulator.plan.md`
+Save the plan in the folder: `docs/plans/002-extended-map-area.plan.md`
 
 ---
 

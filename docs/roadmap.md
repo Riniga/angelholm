@@ -30,7 +30,16 @@ roadmap's own MVP numbering.
 Establish the basic simulation environment and prove that a real city can be represented and simulated.
 
 * **MVP-001 – First Traffic Simulation** — Import a selected real-world area, create a routable network, generate traffic and run a visual simulation.
-* **MVP-002 – Multimodal City** — Introduce cars, cyclists and pedestrians using the appropriate parts of the network.
+* **MVP-002 – Extended Map Area** — Grow the road network from MVP-001's small neighbourhood
+  extract to the full outlined coverage area of central Ängelholm
+  (`docs/architecture/mapoutline.png`: NW 56.255099, 12.849519 — SE 56.225986, 12.894902),
+  clipped to the drawn outline rather than the raw bounding box so surrounding areas
+  outside it are excluded. Network/routing/traffic logic only — no new map features.
+* **MVP-003 – Map Context Features** — Import water, land use/land cover and other
+  non-routing geographic features for the extended area, so the visualisation reads as
+  recognisably Ängelholm. Visual context only — does not change routing or traffic
+  behaviour.
+* **MVP-004 – Multimodal City** — Introduce cars, cyclists and pedestrians using the appropriate parts of the network.
 
 ---
 
@@ -38,8 +47,8 @@ Establish the basic simulation environment and prove that a real city can be rep
 
 Move from generated traffic to a population whose individual travel needs create the traffic.
 
-* **MVP-003 – Synthetic Population** — Introduce people with origins, destinations, departure times and available transport modes.
-* **MVP-004 – Daily Travel Patterns** — Allow people to perform multiple trips representing simplified daily activities such as home, work, school and leisure.
+* **MVP-005 – Synthetic Population** — Introduce people with origins, destinations, departure times and available transport modes.
+* **MVP-006 – Daily Travel Patterns** — Allow people to perform multiple trips representing simplified daily activities such as home, work, school and leisure.
 
 ---
 
@@ -47,8 +56,8 @@ Move from generated traffic to a population whose individual travel needs create
 
 Enable controlled experiments with the city's infrastructure.
 
-* **MVP-005 – Road Closure Experiment** — Close or restrict a road and allow affected traffic to adapt.
-* **MVP-006 – Scenario Comparison** — Run identical populations against different infrastructure scenarios and compare the results.
+* **MVP-007 – Road Closure Experiment** — Close or restrict a road and allow affected traffic to adapt.
+* **MVP-008 – Scenario Comparison** — Run identical populations against different infrastructure scenarios and compare the results.
 
 ---
 
