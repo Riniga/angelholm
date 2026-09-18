@@ -9,6 +9,9 @@ dependencies = [
     "eclipse-sumo==1.27.1",
     "traci==1.27.1",
     "sumolib==1.27.1",
+    # MVP-002: polygon-based coverage-outline clipping in simulator.network — see
+    # requirements.in and ADR-007.
+    "shapely>=2.0,<3",
 ]
 
 [project.scripts]

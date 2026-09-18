@@ -50,3 +50,19 @@ pytest-cov>=5,<7
 eclipse-sumo==1.27.1
 traci==1.27.1
 sumolib==1.27.1
+
+# MVP-002 (docs/plans/002-extended-map-area.plan.md, ADR-007): polygon-based network
+# clipping to the project owner's hand-drawn coverage outline, instead of a bounding box.
+# shapely is a real runtime dependency of the `simulator` package (polygon representation
+# and validation in `simulator.network.load_boundary_polygon`) and is expected to be reused
+# by MVP-003's water/land-use geometry too — kept as a loose range like the project's other
+# non-engine-coupled dependencies.
+shapely>=2.0,<3
+# numpy and opencv-python-headless are tooling-only: used once by
+# scripts/extract_coverage_outline.py to trace the hand-drawn outline in
+# docs/architecture/mapoutline.png into GeoJSON. Not imported by the `simulator` package
+# itself — the "headless" variant avoids pulling in GUI/video libraries this repo never
+# uses. Licences: both already on this file's allowlist (BSD-3-Clause / Apache Software
+# License) — see docs/standards/dependencies.md.
+numpy>=1.26,<3
+opencv-python-headless>=4.9,<5
