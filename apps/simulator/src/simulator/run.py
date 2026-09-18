@@ -15,6 +15,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from simulator.context_features import build_context_features
 from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
 from simulator.simulate import run_gui, run_headless
 from simulator.traffic import generate_traffic, write_sumocfg
@@ -50,10 +51,17 @@ def main(argv: list[str] | None = None) -> int:
         boundary_polygon = load_boundary_polygon(DATA_DIR / "coverage-outline.geojson")
         build_network(osm_file, net_file, boundary_polygon=boundary_polygon)
 
+    # Regenerated on every run, like routes/.sumocfg below — deterministic from the two
+    # already-committed fixtures (net_file, the OSM extract), not gated behind
+    # --rebuild-network. Purely visual: never read by the headless simulation engine.
+    poly_file = build_context_features(
+        DATA_DIR / "angelholm_bbox.osm.xml", net_file, DATA_DIR / "angelholm.poly.xml"
+    )
+
     route_file = DATA_DIR / "angelholm.rou.xml"
     config_file = DATA_DIR / "angelholm.sumocfg"
     generate_traffic(net_file, route_file)
-    write_sumocfg(net_file, route_file, config_file)
+    write_sumocfg(net_file, route_file, config_file, additional_files=poly_file)
 
     if args.headless:
         run_headless(config_file)

@@ -24,6 +24,9 @@ reports/
 apps/simulator/data/*.rou.xml
 apps/simulator/data/*.sumocfg
 apps/simulator/data/*.trips.xml
+# MVP-003: map context shapes, deterministic from the already-committed network/OSM
+# extract via polyconvert — same reasoning as the routes/.sumocfg above.
+apps/simulator/data/*.poly.xml
 
 # IDE
 .vscode/

@@ -18,6 +18,10 @@ class TestMain:
         with (
             patch("simulator.run.fetch_osm_extract") as mock_fetch,
             patch("simulator.run.build_network") as mock_build,
+            patch(
+                "simulator.run.build_context_features",
+                return_value=tmp_path / "angelholm.poly.xml",
+            ) as mock_context,
             patch("simulator.run.generate_traffic") as mock_traffic,
             patch("simulator.run.write_sumocfg") as mock_cfg,
             patch("simulator.run.run_gui") as mock_gui,
@@ -28,8 +32,18 @@ class TestMain:
         assert exit_code == 0
         mock_fetch.assert_not_called()
         mock_build.assert_not_called()
+        mock_context.assert_called_once_with(
+            tmp_path / "angelholm_bbox.osm.xml",
+            tmp_path / "network.net.xml",
+            tmp_path / "angelholm.poly.xml",
+        )
         mock_traffic.assert_called_once()
-        mock_cfg.assert_called_once()
+        mock_cfg.assert_called_once_with(
+            tmp_path / "network.net.xml",
+            tmp_path / "angelholm.rou.xml",
+            tmp_path / "angelholm.sumocfg",
+            additional_files=tmp_path / "angelholm.poly.xml",
+        )
         mock_gui.assert_called_once()
         mock_headless.assert_not_called()
 
@@ -48,6 +62,10 @@ class TestMain:
                 "simulator.run.load_boundary_polygon", return_value="1,2,3,4,1,2"
             ) as mock_load_polygon,
             patch("simulator.run.build_network") as mock_build,
+            patch(
+                "simulator.run.build_context_features",
+                return_value=tmp_path / "angelholm.poly.xml",
+            ),
             patch("simulator.run.generate_traffic"),
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui"),
@@ -75,6 +93,10 @@ class TestMain:
             ) as mock_fetch,
             patch("simulator.run.load_boundary_polygon", return_value="1,2,3,4,1,2"),
             patch("simulator.run.build_network") as mock_build,
+            patch(
+                "simulator.run.build_context_features",
+                return_value=tmp_path / "angelholm.poly.xml",
+            ),
             patch("simulator.run.generate_traffic"),
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui"),
@@ -93,6 +115,10 @@ class TestMain:
         with (
             patch("simulator.run.fetch_osm_extract"),
             patch("simulator.run.build_network"),
+            patch(
+                "simulator.run.build_context_features",
+                return_value=tmp_path / "angelholm.poly.xml",
+            ),
             patch("simulator.run.generate_traffic"),
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui") as mock_gui,
