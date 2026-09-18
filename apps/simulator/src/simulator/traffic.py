@@ -109,7 +109,7 @@ def write_sumocfg(
     """Write a `.sumocfg` tying `net_file` and `route_file` together.
 
     Paths are written relative to `config_path`'s own directory, since that's how SUMO
-    resolves them at run time — the three files don't have to live in the same directory.
+    resolves them at run time — the two files don't have to live in the same directory.
     `delay_ms` sets `sumo-gui`'s default per-step animation delay so a human can actually
     watch it run; headless `sumo` (used by `run_headless()`) ignores this `<gui_only>`
     setting entirely, so it has no effect on the automated acceptance check.

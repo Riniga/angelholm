@@ -17,13 +17,14 @@ This workspace contains an urban mobility simulation project for modelling how p
 
 The project is intended to provide an experimental environment where infrastructure and traffic conditions can be changed and the resulting effects on mobility can be simulated, measured and compared. See [`docs/vision.md`](../vision.md) for the full purpose and principles, and [`docs/roadmap.md`](../roadmap.md) for the planned delivery stages (R0–R5).
 
-**All three MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002) is
-a real, working application — fetches OpenStreetMap data, builds a routable SUMO network
-clipped to a hand-drawn coverage outline, generates traffic, and runs the simulation
-headless or via `sumo-gui`, all through the `simulator` console command. MVP-000 (workspace
-foundation: ADRs, methodology-compliance baseline, repo settings) closed first and MVP-001
-built on top of it, with MVP-002 growing the covered area afterward. The repository was
-initialised
+**All four MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002 and
+MVP-003) is a real, working application — fetches OpenStreetMap data, builds a routable
+SUMO network clipped to a hand-drawn coverage outline, generates traffic and map context
+shapes (water/land use), and runs the simulation headless or via `sumo-gui`, all through
+the `simulator` console command. MVP-000 (workspace foundation: ADRs,
+methodology-compliance baseline, repo settings) closed first and MVP-001 built on top of
+it, with MVP-002 growing the covered area and MVP-003 adding visual context afterward. The
+repository was initialised
 from a generic, organisation-wide reference skeleton (referred to in the repository as a
 "grundplåt"); its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) were fully carried out and
 the file deleted, per its own instruction, before either MVP began. No `packages/` exists
@@ -110,19 +111,23 @@ yet built.
 
 ### Geographic Model
 
-**Implemented, MVP-001 + MVP-002.** `simulator.network.fetch_osm_extract()` downloads a
-real OpenStreetMap extract (via SUMO's own `osmGet.py`) for the outlined central-Ängelholm
-coverage area (`docs/architecture/mapoutline.png`) — see `ADR-006`. Committed as a fixture:
-`apps/simulator/data/angelholm_bbox.osm.xml`. `simulator.network.load_boundary_polygon()`
-loads a digitized version of that hand-drawn outline
-(`apps/simulator/data/coverage-outline.geojson`, `ADR-007`) so the network build clips to
-the actual outline shape, not just its bounding box.
+**Implemented, MVP-001 + MVP-002 + MVP-003.** `simulator.network.fetch_osm_extract()`
+downloads a real OpenStreetMap extract (via SUMO's own `osmGet.py`) for the outlined
+central-Ängelholm coverage area (`docs/architecture/mapoutline.png`) — see `ADR-006`.
+Committed as a fixture: `apps/simulator/data/angelholm_bbox.osm.xml`.
+`simulator.network.load_boundary_polygon()` loads a digitized version of that hand-drawn
+outline (`apps/simulator/data/coverage-outline.geojson`, `ADR-007`) so the network build
+clips to the actual outline shape, not just its bounding box.
+`simulator.context_features.write_gui_settings()` shows the project owner's own basemap
+image (`docs/architecture/map_plain.gif`, converted once to
+`apps/simulator/data/context-background.png`) as a georeferenced background behind the
+network in `sumo-gui` only, via SUMO's `<decal>` mechanism — never read by the simulation
+engine itself (`ADR-008`).
 
 Covered so far: roads, intersections, lanes/permitted modes as encoded in OSM way tags —
-whatever `netconvert` extracts from raw OSM XML. Not yet covered (see "Domain / product"
-below): dedicated handling of pedestrian/bicycle infrastructure, speed-limit overrides
-beyond OSM defaults, non-road geographic features (buildings, water, parks — planned next,
-`docs/mvp/003-map-context-features.md`).
+whatever `netconvert` extracts from raw OSM XML — plus a real basemap image for visual
+context. Not yet covered (see "Domain / product" below): dedicated handling of
+pedestrian/bicycle infrastructure, speed-limit overrides beyond OSM defaults, buildings.
 
 ### Mobility Simulation
 
@@ -198,7 +203,7 @@ originally expected.
 
 ### Runtime
 
-`apps/simulator` (MVP-001, extended by MVP-002) depends on:
+`apps/simulator` (MVP-001, extended by MVP-002 and MVP-003) depends on:
 
 * **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly pinned to `1.27.1`) — the mobility
   simulation engine. `ADR-006` records the choice, including a real gotcha: conda-forge's
@@ -214,13 +219,19 @@ originally expected.
   `docs/architecture/mapoutline.png`'s outline via `netconvert
   --keep-edges.in-geo-boundary`, rather than just a bounding box. `ADR-007` records the
   choice.
+* **`pyproj`** (`>=3.6,<4`, MVP-003) — converts the background image's known geographic
+  corners into the network's own coordinate system
+  (`simulator.context_features.write_gui_settings()`), so a `<decal>` covering the image
+  can be placed without further coordinate math. `ADR-008` records the choice (and the
+  two rejected mechanisms — `polyconvert`-derived shapes, both plain and
+  `shapely`-clipped — that were tried and found wanting first).
 
 ### Development / tooling dependencies
 
 The **tooling** dependency surface, now exercised against real code (`apps/simulator`):
 
 * `environment.yml` — Conda environment definition (`name: angelholm`): Python 3.13, `pytest>=8.0` pinned at the Conda layer; a `pip:` block that points at `requirements-lock.txt`, verified not to have drifted from `requirements.in`.
-* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps), `pre-commit>=3,<5`, `pytest-cov>=5,<7` (added MVP-001 Phase 2 — was referenced by `testing.md`/`ci.yml` but never actually installed until then), the SUMO toolchain above, `shapely` (also a real `simulator` runtime dependency, listed above), and `numpy`/`opencv-python-headless` (MVP-002, tooling-only — used once by `scripts/extract_coverage_outline.py` to digitize the coverage outline from a raster image; not imported by `simulator` itself).
+* `requirements.in` — source ranges for the pip-compiled lock: `ruff` (pinned exactly, kept in sync with `.pre-commit-config.yaml`'s `rev` and `ci.yml`'s install step — Dependabot only updates this file automatically, the other two need a manual follow-up each time it bumps), `pre-commit>=3,<5`, `pytest-cov>=5,<7` (added MVP-001 Phase 2 — was referenced by `testing.md`/`ci.yml` but never actually installed until then), the SUMO toolchain above, `shapely`/`pyproj` (also real `simulator` runtime dependencies, listed above), and `numpy`/`opencv-python-headless`/`pillow` (tooling-only — used once each by `scripts/extract_coverage_outline.py` (MVP-002, digitize the coverage outline from a raster image) and `scripts/convert_context_background.py` (MVP-003, convert the basemap screenshot to PNG); not imported by `simulator` itself).
 * `pyproject.toml` — `[tool.ruff]` (formatter/linter config, `known-first-party = ["simulator"]`) and `[tool.coverage]` (coverage gate, `source = ["apps/simulator/src"]`); has no `[project]`/`[build-system]` table by design — nothing installs the repo root itself. `fail_under = 95` — a real, measured baseline (99%+ on `apps/simulator`), not a placeholder any longer (`ADR-004`, `GAP-D1-COVERAGE` closed).
 * `pytest.ini` — `testpaths = apps/simulator/tests`.
 * `.pre-commit-config.yaml` — Ruff (check + format), `check-yaml`/`check-toml`/`check-merge-conflict`/`check-added-large-files` (threshold raised to 600 KB, documented, for the committed OSM fixture), and `detect-secrets`.

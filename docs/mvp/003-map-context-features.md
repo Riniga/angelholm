@@ -82,3 +82,59 @@ The following are deliberately excluded from this MVP:
   passing — confirmed by actually re-running them, not assumed from "it's visual-only".
 * The project owner visually confirms, in `sumo-gui`, that the rendered context makes the
   area recognisable as Ängelholm.
+
+## Outcome at close (2026-09-18)
+
+Closed as **delivered**, via a materially different mechanism than originally planned —
+see below — all acceptance criteria met, each verified for real, not asserted.
+
+* **Water and land-use context is visible in `sumo-gui`, recognisable against the source
+  map.** Met, but not the way originally planned. The first two mechanisms tried were
+  both real attempts that failed for real reasons: `polyconvert`-derived shapes let a
+  large coastal water body leak in unclipped (it can only keep/discard a whole shape,
+  never clip its geometry); a self-rendered, `shapely`-clipped fix solved that but
+  produced a visually incomplete map (the river rendered as disconnected fragments,
+  found by the project owner's own review in `sumo-gui`, not assumed). The project owner
+  then pointed out they already had a complete, real basemap image
+  (`docs/architecture/map_plain.gif`) — used directly as a georeferenced `sumo-gui`
+  background instead. See `ADR-008-basemap-image-for-context-features.md` (renamed
+  mid-implementation from `ADR-008-polyconvert-for-context-features.md`, reflecting the
+  final mechanism) for the full account.
+* **Distinguishable by type via SUMO's own rendering** — not literally met (the
+  background is one flat image, not individually typed/toggleable shapes), but the goal
+  behind that criterion (a human can tell water from green space from built-up area) is
+  met through the image's own pre-existing cartography instead.
+* **Regeneration is scripted, not a one-off manual step.**
+  `scripts/convert_context_background.py` (one-off image conversion, committed asset) +
+  `simulator.context_features.write_gui_settings()` (regenerated every GUI run from the
+  committed image and network). Reuses the network's own coordinate system; no separate
+  OSM fetch involved for this feature at all.
+* **Alignment needed real, live tuning, not just the computed geographic-corner
+  placement.** The project owner used `sumo-gui`'s own built-in decal editor to nudge the
+  image and read back corrected `centerX`/`centerY`/`width`/`height`/`rotation` values —
+  captured as `MANUAL_OFFSET_X`/`MANUAL_OFFSET_Y`/`MANUAL_SCALE_X`/`MANUAL_SCALE_Y`/
+  `MANUAL_ROTATION` constants in `simulator/context_features.py`, applied on top of the
+  geographic computation (not as absolute values), so they survive a future network
+  rebuild. Verified independently before the live check even happened: rendering the
+  real network's own edges on top of the background image, using the exact same
+  transform, confirmed the *unrotated* geographic placement already tracked the real
+  street grid closely — the remaining correction was genuinely a small
+  screenshot-crop/rotation imprecision, not a mechanism bug.
+* **MVP-001/002's existing acceptance criteria still hold.** Met — `simulator --headless`
+  still reports `"Simulation completed successfully"` with 40 vehicles, unaffected;
+  confirmed by actually re-running it after every change in this MVP, not assumed from
+  "it's visual-only".
+* **The project owner visually confirms the result.** Met — confirmed directly in
+  `sumo-gui`, with the tuned alignment values baked in as the new defaults.
+
+**Dependency outcome:** `pyproj` (MIT) is a real new `simulator` runtime dependency.
+`Pillow` (`MIT-CMU`, approved by the project owner 2026-09-18 — a new licence added to
+`docs/standards/dependencies.md`'s allow-list, and to `ci.yml`'s own separate, hard-coded
+enforcement copy of that list, which does **not** read the doc automatically) ended up
+tooling-only (the one-off conversion script), not a `simulator` runtime dependency as
+first planned. `polyconvert`, `shapely`-based clipping, and the trimmed
+`context-features.typ.xml` type file were all removed after being built and committed —
+real, working code, deleted once a simpler, more correct mechanism was found, not
+speculative churn.
+
+**Final test/coverage state:** 33 tests, 99.41% coverage (floor 95%).

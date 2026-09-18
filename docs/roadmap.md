@@ -39,7 +39,7 @@ Establish the basic simulation environment and prove that a real city can be rep
   non-routing geographic features for the extended area, so the visualisation reads as
   recognisably Ängelholm. Visual context only — does not change routing or traffic
   behaviour.
-* **MVP-004 – Multimodal City** — Introduce cars, cyclists and pedestrians using the appropriate parts of the network.
+* **MVP-004 – Multimodal City** — Introduce cars, cyclists and pedestrians using the appropriate parts of the network, generated independently per mode (still synthetic, not population-based) and biased toward a curated set of real city entry/exit edges rather than spread uniformly across the whole network.
 
 ---
 

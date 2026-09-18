@@ -23,7 +23,7 @@ docs/
     Architecture, development process, standards, roadmap, MVPs and implementation plans
 
 apps/
-    simulator/   Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002)
+    simulator/   Traffic simulation for the outlined central-Ängelholm coverage area, with map context for visual orientation (MVP-001/002/003)
 
 packages/    (not yet created — see docs/architecture/overview.md "Planned Evolution")
 ```

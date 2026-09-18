@@ -81,6 +81,7 @@ BSD-3-Clause
 BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
 MIT
 MIT License
+MIT-CMU
 MPL-2.0 AND MIT
 Mozilla Public License 2.0 (MPL 2.0)
 PSF-2.0
@@ -96,7 +97,10 @@ for MVP-001 (`docs/plans/001-first-traffic-simulator.plan.md`). This project onl
 SUMO as an external tool it calls, does not modify or redistribute its source, so the
 copyleft terms' practical effect on this project's own code is minimal — noted here as the
 reasoning, not a substitute for reading the actual licence text if this project's use ever
-changes (e.g. bundling/redistributing SUMO itself).
+changes (e.g. bundling/redistributing SUMO itself). `MIT-CMU` (Pillow, an MIT variant) was
+approved by the project owner 2026-09-18 for MVP-003
+(`docs/plans/003-map-context-features.plan.md`) — a permissive licence, added deliberately
+rather than assumed to already match plain `MIT`'s exact string.
 
 **This workspace's own packages** report `UNKNOWN` to `pip-licenses` (no licence
 classifier — they're internal, not published) and should be excluded from the check by

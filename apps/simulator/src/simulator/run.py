@@ -15,6 +15,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from simulator.context_features import write_gui_settings
 from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
 from simulator.simulate import run_gui, run_headless
 from simulator.traffic import generate_traffic, write_sumocfg
@@ -58,7 +59,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.headless:
         run_headless(config_file)
     else:
-        run_gui(config_file)
+        # GUI-only: the map-context background is read by sumo-gui via
+        # --gui-settings-file, never touched by the headless simulation engine, so this
+        # is skipped entirely for --headless.
+        gui_settings_file = write_gui_settings(
+            net_file, DATA_DIR / "angelholm-guisettings.xml"
+        )
+        run_gui(config_file, gui_settings_file=gui_settings_file)
 
     return 0
 

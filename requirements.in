@@ -54,15 +54,38 @@ sumolib==1.27.1
 # MVP-002 (docs/plans/002-extended-map-area.plan.md, ADR-007): polygon-based network
 # clipping to the project owner's hand-drawn coverage outline, instead of a bounding box.
 # shapely is a real runtime dependency of the `simulator` package (polygon representation
-# and validation in `simulator.network.load_boundary_polygon`) and is expected to be reused
-# by MVP-003's water/land-use geometry too — kept as a loose range like the project's other
-# non-engine-coupled dependencies.
+# and validation in `simulator.network.load_boundary_polygon`) — kept as a loose range like
+# the project's other non-engine-coupled dependencies.
 shapely>=2.0,<3
-# numpy and opencv-python-headless are tooling-only: used once by
-# scripts/extract_coverage_outline.py to trace the hand-drawn outline in
-# docs/architecture/mapoutline.png into GeoJSON. Not imported by the `simulator` package
-# itself — the "headless" variant avoids pulling in GUI/video libraries this repo never
-# uses. Licences: both already on this file's allowlist (BSD-3-Clause / Apache Software
-# License) — see docs/standards/dependencies.md.
+# numpy, opencv-python-headless and pillow are tooling-only: used once each by
+# scripts/extract_coverage_outline.py (trace the hand-drawn outline in
+# docs/architecture/mapoutline.png into GeoJSON, MVP-002) and
+# scripts/convert_context_background.py (convert docs/architecture/map_plain.gif into the
+# committed apps/simulator/data/context-background.png, MVP-003). Not imported by the
+# `simulator` package itself — opencv's "headless" variant avoids pulling in GUI/video
+# libraries this repo never uses. Licences: BSD-3-Clause / Apache Software License / MIT-CMU
+# (Pillow — an MIT variant, approved by the project owner 2026-09-18) — see
+# docs/standards/dependencies.md's allow-list.
 numpy>=1.26,<3
 opencv-python-headless>=4.9,<5
+pillow>=10,<13
+
+# MVP-003 (docs/plans/003-map-context-features.plan.md, ADR-008): places the project
+# owner's own basemap image as a georeferenced sumo-gui background, so the covered area
+# reads as recognisably Ängelholm without re-deriving water/land-use shapes from raw OSM
+# data (an earlier approach using polyconvert let a large coastal water body leak in
+# unclipped — polyconvert can only keep or discard a whole shape, never clip its geometry).
+# pyproj: real simulator runtime dependency, used indirectly via sumolib's own
+# convertLonLat2XY() (already an implicit requirement of sumolib for that functionality) to
+# convert the background image's known corners into the network's coordinate system.
+# Licence: MIT, already on this file's allowlist.
+pyproj>=3.6,<4
+
+# defusedxml: XXE-safe replacement for the stdlib xml.etree.ElementTree, used by
+# simulator.context_features._read_net_bbox() to parse the committed network.net.xml.
+# Not a response to a real exploit (network.net.xml is our own netconvert output, not
+# untrusted external input) but a real, blocking CI finding — GitHub's "SAST" job (Semgrep,
+# p/security-audit + p/owasp-top-ten) failed PR #6 on
+# python.lang.security.use-defused-xml[-parse] for the plain xml.etree.ElementTree import.
+# Licence: Python Software Foundation License, already on this file's allowlist.
+defusedxml>=0.7,<0.8

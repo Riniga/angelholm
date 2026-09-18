@@ -1,7 +1,7 @@
 [project]
 name = "simulator"
 version = "0.1.0"
-description = "Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002) — imports OpenStreetMap data, builds a routable SUMO network clipped to a coverage outline, and runs a repeatable simulation."
+description = "Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002/003) — imports OpenStreetMap data, builds a routable SUMO network clipped to a coverage outline, shows a real basemap image for visual context, and runs a repeatable simulation."
 requires-python = ">=3.13"
 # Exact pins, matching requirements.in's reasoning: traci/sumolib are thin Python APIs over
 # the eclipse-sumo binaries and must match the engine version they talk to. See ADR-006.
@@ -12,6 +12,12 @@ dependencies = [
     # MVP-002: polygon-based coverage-outline clipping in simulator.network — see
     # requirements.in and ADR-007.
     "shapely>=2.0,<3",
+    # MVP-003: converts the project owner's basemap image corners into network
+    # coordinates in simulator.context_features — see requirements.in and ADR-008.
+    "pyproj>=3.6,<4",
+    # XXE-safe XML parsing (Semgrep SAST: python.lang.security.use-defused-xml) for
+    # simulator.context_features's own .net.xml parsing — see requirements.in.
+    "defusedxml>=0.7,<0.8",
 ]
 
 [project.scripts]

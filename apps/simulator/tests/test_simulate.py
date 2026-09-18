@@ -55,3 +55,26 @@ class TestRunGui:
             "simulator.simulate.subprocess.run", return_value=_completed(1, "closed")
         ):
             assert run_gui(config_path) is None
+
+    def test_gui_settings_file_adds_the_flag(self, tmp_path: Path) -> None:
+        config_path = tmp_path / "sim.sumocfg"
+        settings_path = tmp_path / "gui-settings.xml"
+        with patch(
+            "simulator.simulate.subprocess.run", return_value=_completed(0)
+        ) as mock_run:
+            run_gui(config_path, gui_settings_file=settings_path)
+        assert mock_run.call_args.args[0] == [
+            "sumo-gui",
+            "-c",
+            str(config_path),
+            "--gui-settings-file",
+            str(settings_path),
+        ]
+
+    def test_no_gui_settings_file_omits_the_flag(self, tmp_path: Path) -> None:
+        config_path = tmp_path / "sim.sumocfg"
+        with patch(
+            "simulator.simulate.subprocess.run", return_value=_completed(0)
+        ) as mock_run:
+            run_gui(config_path)
+        assert "--gui-settings-file" not in mock_run.call_args.args[0]

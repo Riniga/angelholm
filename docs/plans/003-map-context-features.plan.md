@@ -2,6 +2,16 @@
 
 Implements [`docs/mvp/003-map-context-features.md`](../mvp/003-map-context-features.md).
 
+**Status:** Superseded during implementation — Phases 1–2 below were built as written
+(the `polyconvert` + trimmed type file mechanism), but a real defect (a large coastal
+water body `polyconvert` couldn't clip, see `ADR-008`) and, after fixing that, a visually
+incomplete rendered map (found by the project owner's own review in `sumo-gui`) led to
+replacing the whole shape-rendering pipeline with the project owner's own basemap image
+instead. See `ADR-008-basemap-image-for-context-features.md` (renamed from
+`ADR-008-polyconvert-for-context-features.md` mid-implementation, reflecting this) and
+the MVP's "Outcome at close" for the real story — this plan is kept as-written below for
+traceability, not rewritten to match what actually shipped.
+
 ## 1. Goal
 
 Make `sumo-gui`'s view of the MVP-002 coverage area show recognisable water and land-use
@@ -53,7 +63,7 @@ fixtures before being written into a TODO, not assumed from documentation.
 
 | File | Change |
 |---|---|
-| `docs/architecture/decisions/ADR-008-polyconvert-for-context-features.md` (new) | Records using `polyconvert` + a custom, discard-by-default type file (not the bundled default, which pulls in buildings) for water/land-use context shapes. |
+| `docs/architecture/decisions/ADR-008-basemap-image-for-context-features.md` (new) | Records using `polyconvert` + a custom, discard-by-default type file (not the bundled default, which pulls in buildings) for water/land-use context shapes. |
 | `docs/architecture/decisions/README.md` | Add the ADR-008 index row. |
 | `apps/simulator/data/context-features.typ.xml` (new, committed) | Trimmed `polyconvert` type file: only water/natural/landuse `<polygonType>` entries, adapted from SUMO's bundled `osmPolyconvert.typ.xml`. Committed (small, static, not regenerated) — unlike the shapes output itself. |
 | `apps/simulator/src/simulator/context_features.py` (new) | `build_context_features(osm_file, net_file, output_path, type_file=...) -> Path`, running `polyconvert --net-file ... --osm-files ... --type-file ... --discard -o ...`. Mirrors `network.py`'s `NetworkBuildError`-style error handling. |
@@ -81,7 +91,7 @@ fixtures before being written into a TODO, not assumed from documentation.
    the output's `type="..."` values are exactly `{water, landuse, forest, residential,
    industrial}` (or a similarly small, buildings-free set) — a quick `grep -o
    'type="[^"]*"' | sort | uniq -c` check, same as this session's verification.
-3. Write `docs/architecture/decisions/ADR-008-polyconvert-for-context-features.md`
+3. Write `docs/architecture/decisions/ADR-008-basemap-image-for-context-features.md`
    (Nygard format, matching `ADR-007`'s style) and add its row to
    `docs/architecture/decisions/README.md`'s index.
 
