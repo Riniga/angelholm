@@ -23,7 +23,7 @@ docs/
     Architecture, development process, standards, roadmap, MVPs and implementation plans
 
 apps/
-    simulator/   First traffic simulation for a small real-world area of Ängelholm (MVP-001)
+    simulator/   Traffic simulation for the outlined central-Ängelholm coverage area (MVP-001/002)
 
 packages/    (not yet created — see docs/architecture/overview.md "Planned Evolution")
 ```
