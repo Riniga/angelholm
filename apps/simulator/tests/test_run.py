@@ -44,6 +44,9 @@ class TestMain:
                 "simulator.run.fetch_osm_extract",
                 return_value=tmp_path / "extract.osm.xml",
             ) as mock_fetch,
+            patch(
+                "simulator.run.load_boundary_polygon", return_value="1,2,3,4,1,2"
+            ) as mock_load_polygon,
             patch("simulator.run.build_network") as mock_build,
             patch("simulator.run.generate_traffic"),
             patch("simulator.run.write_sumocfg"),
@@ -52,7 +55,12 @@ class TestMain:
             main([])
 
         mock_fetch.assert_called_once()
-        mock_build.assert_called_once()
+        mock_load_polygon.assert_called_once_with(tmp_path / "coverage-outline.geojson")
+        mock_build.assert_called_once_with(
+            tmp_path / "extract.osm.xml",
+            tmp_path / "network.net.xml",
+            boundary_polygon="1,2,3,4,1,2",
+        )
 
     def test_rebuild_network_flag_forces_fetch_and_build(
         self, tmp_path: Path, monkeypatch
@@ -65,6 +73,7 @@ class TestMain:
                 "simulator.run.fetch_osm_extract",
                 return_value=tmp_path / "extract.osm.xml",
             ) as mock_fetch,
+            patch("simulator.run.load_boundary_polygon", return_value="1,2,3,4,1,2"),
             patch("simulator.run.build_network") as mock_build,
             patch("simulator.run.generate_traffic"),
             patch("simulator.run.write_sumocfg"),

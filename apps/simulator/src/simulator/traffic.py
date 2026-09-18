@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 MIN_VEHICLES = 10
 DEFAULT_BEGIN = 0
 DEFAULT_END = 200
-DEFAULT_PERIOD = 15.0
+# MVP-002: the network grew ~8x (519 -> 4250 edges) when the covered area was extended to
+# the outlined central-Ängelholm area. MVP-001's period=15.0 (~14 vehicles) would look
+# visually empty on a network this size; period=5.0 (~40 vehicles) keeps a comparable
+# density without generating an overwhelming number of trips. A tuning choice, not a hard
+# requirement — see docs/plans/002-extended-map-area.plan.md Phase 3, TODO 15.
+DEFAULT_PERIOD = 5.0
 # sumo-gui runs a simulation step as fast as it can by default — 200 simulated seconds
 # finishes in a couple of real seconds, too fast to actually watch. 200ms/step spreads
 # that over ~40 real seconds instead. Ignored entirely by headless `sumo` (gui_only).
