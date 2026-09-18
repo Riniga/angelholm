@@ -80,3 +80,12 @@ pillow>=10,<13
 # convert the background image's known corners into the network's coordinate system.
 # Licence: MIT, already on this file's allowlist.
 pyproj>=3.6,<4
+
+# defusedxml: XXE-safe replacement for the stdlib xml.etree.ElementTree, used by
+# simulator.context_features._read_net_bbox() to parse the committed network.net.xml.
+# Not a response to a real exploit (network.net.xml is our own netconvert output, not
+# untrusted external input) but a real, blocking CI finding — GitHub's "SAST" job (Semgrep,
+# p/security-audit + p/owasp-top-ten) failed PR #6 on
+# python.lang.security.use-defused-xml[-parse] for the plain xml.etree.ElementTree import.
+# Licence: Python Software Foundation License, already on this file's allowlist.
+defusedxml>=0.7,<0.8

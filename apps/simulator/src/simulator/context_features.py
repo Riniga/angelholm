@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import logging
 import os
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import defusedxml.ElementTree as ET
 import sumolib
 
 logger = logging.getLogger(__name__)

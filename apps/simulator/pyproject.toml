@@ -15,6 +15,9 @@ dependencies = [
     # MVP-003: converts the project owner's basemap image corners into network
     # coordinates in simulator.context_features — see requirements.in and ADR-008.
     "pyproj>=3.6,<4",
+    # XXE-safe XML parsing (Semgrep SAST: python.lang.security.use-defused-xml) for
+    # simulator.context_features's own .net.xml parsing — see requirements.in.
+    "defusedxml>=0.7,<0.8",
 ]
 
 [project.scripts]
