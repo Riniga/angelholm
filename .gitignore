@@ -29,6 +29,10 @@ apps/simulator/data/*.trips.xml
 # (apps/simulator/data/context-background.png) is a static, committed asset, not
 # regenerated — not gitignored.
 apps/simulator/data/*-guisettings.xml
+# MVP-004: entry/exit edge-weight files, regenerated on demand from the committed
+# entry-exit-edges.json — same reasoning as routes/.sumocfg above.
+apps/simulator/data/*.src.xml
+apps/simulator/data/*.dst.xml
 
 # IDE
 .vscode/
