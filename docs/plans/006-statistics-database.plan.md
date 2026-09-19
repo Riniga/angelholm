@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** Not started.
+**Status:** In progress — Phases 1–5 done (statistics file; loader; time-varying source; wired into the run; readable clock); Phase 6 (long runs and calibration) next.
 
 ## 1. Goal
 
@@ -316,3 +316,133 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
 * **Open: does adding a per-hour log line clutter long runs?** Phase 4 keeps it to one line per
   simulated hour; if it is too noisy in the GUI console it can be folded into the existing
   15-minute line.
+
+## Findings
+
+### Findings from Phase 6 (48 simulated hours, headless, seed 1, then 24 more with PID-level memory)
+
+* **Rhythm and profile:** spawned per hour matches the profile (cars: 03-04 about 41, 07-08 about
+  712-740, 17-18 about 704-747); day 1 and day 2 have the same shape within noise. Daily totals:
+  8,943 cars / 2,245 bicycles / 3,675 pedestrians a day against 9,000 / 2,250 / 3,750 expected.
+* **Mode split of spawns over 48 h:** 60.2 % / 15.1 % / 24.7 % (configured 60 / 15 / 25).
+* **Stability:** concurrent travellers about 10 at night, 250-300 at the 08:00 and 18:00 peaks, no
+  day-to-day growth (08:00: 256 then 280; 18:00: 234 then 235); peak 316 (48 h) and 277 (24 h).
+  Arrived tracks spawned; 0 skipped spawns. Python process 71.2 to 72.0 MB over 24 simulated
+  hours. 64 teleports and 50 vehicle-person collisions in 48 h (MVP-005 level).
+* **Mix on screen at the peaks:** roughly 90-130 cars, 30-38 bicycles, 95-128 pedestrians -
+  bicycles are now clearly the smallest group (MVP-005's complaint), pedestrians remain the
+  largest by count because they stay in the network longer.
+* **Curated entry/exit share of live car spawns:** 74.2 % (48 h), 74.5 % (24 h).
+* **No tuning needed:** the plan's starting values (15,000 trips/day, the 24 weights, 60/15/25)
+  were kept; peak car rate 0.21 per second is well under the ~0.35 ceiling. Recorded in the
+  data file's `_comment`.
+
+### Findings from Phase 7
+
+* Review against the standards found and fixed: two silent `except ... pass` blocks (now log at
+  debug level, per the coding standard), missing docstrings on public methods
+  (`RandomIndividualSource.due/draw`, `ConstantDemand`, `DemandProfile.max_rate`), and an
+  unnecessary `_peak_weight` field on `DemandProfile` (now computed in `max_rate`, which is
+  called once per mode at start-up).
+* `ADR-011` written and indexed; architecture overview, current-state and README updated;
+  roadmap status updated.
+* Open: the owner's live confirmation (rhythm, mix, clock size and placement).
+
+### Findings from Phase 5
+
+Checked for real in `sumo-gui` (screenshots of the actual window), in the plan's order:
+
+1. **`sumo-gui`'s toolbar clock is not enough.** It is a narrow green LCD. Two readings taken
+   a while after start showed four digits (`0050`, later `0150`), i.e. the *minutes and
+   seconds*; with the run starting at 05:00 (18000 s) the hour is clipped away, which is
+   exactly the owner's "not intuitive what time it is". (Reading of the seven-segment digits
+   from screenshots, consistent across two captures; not confirmed against SUMO's source.)
+2. **No view setting for a time display:** `viewsettings_file.xsd` has none (its only `time`
+   attributes belong to breakpoints), and `traci.gui` has no window-title setter.
+3. **A POI label works and is what was built.** `traci.poi.add(...)` with a `poiType` text,
+   shown by the view settings `<pois poiType_show="1" poiType_size="60" poiType_color="red"/>`
+   (attribute names found by searching `sumo-gui.exe`'s strings, then confirmed by a prototype
+   in the scratchpad). The engine keeps the POI at the top-left corner of the current view
+   (`traci.gui.getBoundary()` every step) so it stays put while panning/zooming, and changes
+   its text only when the minute changes. Real `simulator` run: a red `05:01` label is
+   visible in the view corner, counting up.
+4. **Only in the GUI:** headless `sumo` has no view, so `run_live()` passes
+   `show_clock=not headless`. Creating or updating the label is cosmetic: a `TraCIException`
+   is logged once at creation (and turns the clock off) or ignored at update, never stopping
+   the run; a closed GUI (`FatalTraCIError`) still ends the run cleanly.
+5. Tests: 138 (was 129) with `engine.py` and `context_features.py` at 100 %.
+6. The toolbar `Delay (ms)` field is unchanged (200); how long a simulated second takes stays a
+   backlog item (a friendlier speed control).
+
+### Findings from Phase 4
+
+* `--stats PATH` works; an invalid file gives one readable line and exit code 1, no traceback
+  (real check with a 23-hour profile: `Invalid demand statistics: hourly_profile.weights must be
+  a list of exactly 24 numbers … got 23`).
+* **The acceptance criterion "change the file, change the behaviour" was demonstrated for
+  real:** the same seed and 2 hours with the committed shares (60/15/25) spawned 660 cars /
+  151 bicycles / 246 pedestrians; with a scratch copy at 90/5/5 it spawned 980 / 49 / 48, and
+  the start-up line printed the new shares. No code change between the two runs.
+* **The hourly log line works and shows the daily rhythm** (4-hour run, seed 1, spawned in the
+  last hour): 05–06: 213 cars / 58 bicycles / 90 pedestrians → 06–07: 447 / 93 / 156 →
+  07–08: 726 / 179 / 319 → 08–09: 662 / 172 / 258. Cars clearly the largest group; the morning
+  rises about 3.4× from the first hour to the peak.
+* Concurrent travellers over the same run: ~50 at 05:15, ~130–150 around 07:30–08:45, roughly
+  what MVP-005 held all day at 0.24 spawns/s — the peak here is a little above MVP-005's
+  steady state, well under the gridlock ceiling. Calibration and multi-day stability are Phase 6.
+
+### Findings from Phase 3
+
+* Thinning implemented in `RandomIndividualSource`; `DEFAULT_RATES` removed. Statistical tests
+  over 4 simulated days at a fixed seed (busy hour ≈ 10× a quiet hour; hourly counts, daily
+  total, mode split and day-to-day shape all within the stated tolerances) pass on the first
+  run; they take ~3 s, so a fixed seed keeps them deterministic, not flaky.
+* **Phase 4 steps 1–2 were done here on purpose:** `run_live()` needed the new `demand`
+  argument or the live command would have been broken at this commit. `run_live(...,
+  demand_file=DEFAULT_DEMAND_JSON)` now loads the profile, logs `Demand: <describe()>` and passes
+  it to the source. Left for Phase 4: `--stats`, readable CLI error, hourly-spawn log line.
+* First real 2-hour run (seed 1, 05:00–07:00): quiet start (about 50 travellers at 05:15),
+  rising towards the rush (~130 at 07:00), cars now the largest group (660 spawned vs 246
+  pedestrians and 151 bicycles) — the opposite of MVP-005's bike-heavy look. Peak concurrent 147.
+  Not yet a calibration: the busy hours are still ahead.
+
+### Findings from Phase 2
+
+* `demand.py` imports `agents.Mode`, so Phase 3 must not import `demand` at runtime from
+  `agents.py` (circular): `agents.py` imports `Demand` only under `TYPE_CHECKING`
+  (`from __future__ import annotations` is already in place).
+* The committed file is now covered by tests (`TestCommittedFile`): 24 hours, honest labels,
+  a real daily rhythm (night weight ≪ 07:00/17:00 weights, 05:00 below the morning peak), cars
+  the largest share, every mode can spawn, and the peak car rate under 0.30 /s (the measured
+  gridlock ceiling is ~0.35 /s). A future edit that breaks these fails the test suite.
+* Tests: 113 (was 71), `demand.py` at 100 % coverage, total 99 %.
+
+### Findings from Phase 1
+
+Bounded look (a few searches and fetches, not a research project) at real figures. **Result: no
+real figures were extracted or used; every value in `demand-statistics.json` is a labelled
+estimate.** What was found:
+
+* **Trafikverket, "Trafikvariation och lastbilsandelar" (TMALL 0004 rapport, `bransch.trafikverket.se`).**
+  Exists and, according to its own description, has traffic-variation schemas for urban and
+  rural roads (variation by month, weekday and hour, with hourly flows for passenger cars
+  derived from ÅDT). This is the best candidate for the *hourly profile*. The URL from the
+  search result returned HTTP 404 when fetched, so the table itself was not read and its usage
+  terms were not checked. Traffic-count data (`Vägtrafik- och hastighetsdata`) is a separate
+  Trafikverket service, not looked into further.
+* **Trafikanalys, "RVU Sverige" (national travel-habit survey).** Reports mode shares and trip
+  start times (in the search summary: most weekday trips start 07:00–08:00, largely work and
+  school). The 2011–2014 and 2015–2016 report PDFs were fetched but their text was not
+  extractable in this session, so no numbers were read. A search snippet mentioned car at 58 %
+  of trips in Västra Götaland's own regional survey — an unverified pointer only, *not* used as a
+  figure, though it makes a ~60 % car share plausible as a first estimate. Candidate for
+  the *mode shares* and a cross-check of the profile.
+* **Not looked for:** anything specific to Ängelholm (municipal counts, SCB local data). To be
+  revisited when MVP-008 (realistic scale) needs local numbers.
+
+Consequence: the file uses estimates (15,000 trips/day, the 24 weights in the plan, 60/15/25
+shares), each marked `"status": "estimate"` with the candidate real sources named in its note.
+Checked arithmetic on the committed values: 24 weights, peak hour = 8.25 % of the day (~2.0× the
+average hour), average car rate 0.104 /s, **peak car rate 0.206 /s** — under the 0.35 /s ceiling
+as the plan assumed. Replacing an estimate with a real figure later is an edit to this file
+only (set `status` to `"source"` and fill in `source`).

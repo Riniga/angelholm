@@ -8,7 +8,7 @@ Each roadmap area is implemented through one or more MVPs. Once an MVP has been 
 
 ## Current Status
 
-MVP-000 through MVP-005 are delivered (MVP-005 being the first step of R2: a live, TraCI-driven city that starts empty at 05:00 and keeps spawning travellers): a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a live, statistics-driven agent engine (R2) and then infrastructure what-if experiments (R3).
+MVP-000 through MVP-006 are delivered (MVP-005 and MVP-006 are the first steps of R2: a live, TraCI-driven city that starts empty at 05:00 and keeps spawning travellers on a daily rhythm from a statistics file): a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a live, statistics-driven agent engine (R2) and then infrastructure what-if experiments (R3).
 
 ---
 

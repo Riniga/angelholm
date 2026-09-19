@@ -8,7 +8,7 @@ in the same PR as any change to an app's status, test count, or key capabilities
 
 | App | Status | Tests | Key capabilities |
 |-----|--------|-------|-------------------|
-| `apps/simulator` | Implemented (MVP-001 to MVP-005) | 71 | Fetches a real OpenStreetMap extract, builds a routable SUMO network clipped to the outlined central-Ängelholm coverage area (`docs/architecture/mapoutline.png` — 4,250 edges, 1,756 junctions), shows a georeferenced basemap image behind the network in `sumo-gui`, and runs a **live** simulation: an empty city at 05:00 into which a TraCI control loop keeps spawning cars, bicycles and pedestrians (cars biased toward 8 curated entry/exit roads; ~200 concurrent) and SUMO removes them on arrival — indefinitely, headless or via `sumo-gui`, all through the `simulator` console command (`--max-seconds`, `--seed`) |
+| `apps/simulator` | Implemented (MVP-001 to MVP-006) | 138 | Fetches a real OpenStreetMap extract, builds a routable SUMO network clipped to the outlined central-Ängelholm coverage area (`docs/architecture/mapoutline.png` — 4,250 edges, 1,756 junctions), shows a georeferenced basemap image behind the network in `sumo-gui`, and runs a **live** simulation: an empty city at 05:00 into which a TraCI control loop keeps spawning cars, bicycles and pedestrians (cars biased toward 8 curated entry/exit roads) following a daily rhythm from `apps/simulator/data/demand-statistics.json` (estimates: 15,000 trips/day, 60/15/25 car/bicycle/pedestrian; about 10 concurrent at night, 250–300 at the peaks), with the time of day shown in `sumo-gui` and SUMO removes them on arrival — indefinitely, headless or via `sumo-gui`, all through the `simulator` console command (`--max-seconds`, `--seed`, `--stats`) |
 
 ## Shared packages
 
@@ -36,7 +36,7 @@ the one-off `scripts/extract_coverage_outline.py` and
 
 ## Test counts
 
-`apps/simulator`: 71 tests, all mocked/deterministic (no live network, no live SUMO
+`apps/simulator`: 138 tests, all mocked/deterministic (no live network, no live SUMO
 invocation; live-engine behaviour is verified by manual bounded runs, recorded in
 `docs/plans/005-live-agent-engine.plan.md`). Coverage: 99.69% measured 2026-09-19 — floor set to 95% in `pyproject.toml`
 (`ADR-004`, `GAP-D1-COVERAGE` closed).

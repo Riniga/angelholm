@@ -23,7 +23,7 @@ docs/
     Architecture, development process, standards, roadmap, MVPs and implementation plans
 
 apps/
-    simulator/   Live multimodal (car/bicycle/pedestrian) simulation of the outlined central-Ängelholm coverage area: starts empty at 05:00 and spawns travellers through TraCI, with map context for visual orientation (MVP-001..005)
+    simulator/   Live multimodal (car/bicycle/pedestrian) simulation of the outlined central-Ängelholm coverage area: starts empty at 05:00 and spawns travellers through TraCI on a daily rhythm from a statistics file, with map context for visual orientation (MVP-001..006)
 
 packages/    (not yet created — see docs/architecture/overview.md "Planned Evolution")
 ```

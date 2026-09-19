@@ -12,6 +12,7 @@ from traci.exceptions import FatalTraCIError, TraCIException
 
 from simulator import engine
 from simulator.agents import Individual, Mode
+from simulator.demand import DEFAULT_DEMAND_JSON
 from simulator.engine import (
     BICYCLE_TYPE_ID,
     MAX_SPAWN_ATTEMPTS,
@@ -301,6 +302,161 @@ class TestStep:
         assert lines[0].startswith("05:15:00")
 
 
+class TestHourlySpawnLog:
+    def test_reports_spawns_in_the_last_hour_per_mode(self, traci_mock, caplog) -> None:
+        _clock(traci_mock, start=START_TIME + engine.HOURLY_LOG_SECONDS - 1)
+        live = LiveEngine(FakeSource(), [])
+        live.stats.spawned = {Mode.CAR: 120, Mode.BICYCLE: 30, Mode.PEDESTRIAN: 50}
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()  # reaches 06:00:00
+
+        lines = [r.message for r in caplog.records if "last hour" in r.message]
+        assert lines == [
+            "06:00:00  spawned in the last hour: 120 cars, 30 bicycles, 50 pedestrians"
+        ]
+
+    def test_counts_only_since_the_previous_hourly_line(
+        self, traci_mock, caplog
+    ) -> None:
+        _clock(traci_mock, start=START_TIME + engine.HOURLY_LOG_SECONDS - 1)
+        live = LiveEngine(FakeSource(), [])
+        live.stats.spawned = {Mode.CAR: 100, Mode.BICYCLE: 10, Mode.PEDESTRIAN: 20}
+        live.step()  # first hourly line: 100 / 10 / 20
+        live.stats.spawned = {Mode.CAR: 130, Mode.BICYCLE: 15, Mode.PEDESTRIAN: 22}
+        live._next_hourly_log = traci_mock.simulation.getTime() + 1  # due at next step
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()
+
+        lines = [r.message for r in caplog.records if "last hour" in r.message]
+        assert lines[-1].endswith("30 cars, 5 bicycles, 2 pedestrians")
+
+    def test_no_line_before_the_hour_is_full(self, traci_mock, caplog) -> None:
+        _clock(traci_mock)
+        live = LiveEngine(FakeSource(), [])
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()
+
+        assert not [r for r in caplog.records if "last hour" in r.message]
+
+
+class TestClockLabel:
+    """MVP-006 Phase 5: the time of day is a POI label kept in the GUI view corner."""
+
+    @staticmethod
+    def _boundary(traci_mock, x0=0.0, y0=0.0, x1=1000.0, y1=500.0) -> None:
+        traci_mock.gui.getBoundary.return_value = ((x0, y0), (x1, y1))
+
+    def test_not_created_by_default(self, traci_mock) -> None:
+        LiveEngine(FakeSource(), ["sumo"]).start()
+
+        traci_mock.poi.add.assert_not_called()
+        traci_mock.gui.getBoundary.assert_not_called()
+
+    def test_created_at_start_in_the_view_corner_with_the_start_time(
+        self, traci_mock
+    ) -> None:
+        self._boundary(traci_mock)
+
+        LiveEngine(FakeSource(), ["sumo-gui"], show_clock=True).start()
+
+        traci_mock.poi.add.assert_called_once_with(
+            engine.CLOCK_POI_ID,
+            30.0,  # 3 % from the left of a 1000-wide view
+            470.0,  # 6 % from the top of a 500-high view
+            engine.CLOCK_POI_COLOR,
+            poiType="05:00",
+            layer=engine.CLOCK_POI_LAYER,
+        )
+
+    def test_follows_the_view_when_panning_and_zooming(self, traci_mock) -> None:
+        _clock(traci_mock)
+        self._boundary(traci_mock)
+        live = LiveEngine(FakeSource(), [], show_clock=True)
+        live.start()
+
+        self._boundary(traci_mock, x0=200.0, y0=100.0, x1=400.0, y1=200.0)  # zoomed in
+        live.step()
+
+        traci_mock.poi.setPosition.assert_called_with(engine.CLOCK_POI_ID, 206.0, 194.0)
+
+    def test_text_changes_only_when_the_minute_changes(self, traci_mock) -> None:
+        _clock(traci_mock, start=START_TIME + 58)
+        self._boundary(traci_mock)
+        live = LiveEngine(FakeSource(), [], show_clock=True)
+        live.start()
+
+        live.step()  # 05:00:59 -> still "05:00"
+        traci_mock.poi.setType.assert_not_called()
+        live.step()  # 05:01:00
+        live.step()  # 05:01:01
+
+        traci_mock.poi.setType.assert_called_once_with(engine.CLOCK_POI_ID, "05:01")
+
+    def test_shows_hours_and_minutes_after_midnight_wrap(self, traci_mock) -> None:
+        _clock(traci_mock, start=86400 + 3600 - 1)
+        self._boundary(traci_mock)
+        live = LiveEngine(FakeSource(), [], show_clock=True)
+        live.start()
+
+        live.step()
+
+        traci_mock.poi.setType.assert_called_once_with(engine.CLOCK_POI_ID, "01:00")
+
+    def test_a_failing_clock_never_stops_the_simulation(
+        self, traci_mock, caplog
+    ) -> None:
+        _clock(traci_mock)
+        traci_mock.gui.getBoundary.side_effect = TraCIException("no view")
+        live = LiveEngine(FakeSource({START_TIME + 1: [Mode.CAR]}), [], show_clock=True)
+
+        with caplog.at_level(logging.WARNING, logger="simulator.engine"):
+            live.start()  # creation fails: warns and turns the clock off
+            live.step()  # must still spawn and observe
+
+        assert "Could not show the clock" in caplog.text
+        traci_mock.vehicle.add.assert_called_once()
+        traci_mock.poi.setPosition.assert_not_called()
+
+    def test_an_update_error_is_ignored_and_retried(self, traci_mock) -> None:
+        _clock(traci_mock)
+        self._boundary(traci_mock)
+        live = LiveEngine(FakeSource(), [], show_clock=True)
+        live.start()
+        traci_mock.poi.setPosition.side_effect = TraCIException("busy")
+
+        live.step()  # must not raise
+        traci_mock.poi.setPosition.side_effect = None
+        live.step()
+
+        assert traci_mock.poi.setPosition.call_count == 2
+
+    def test_a_closed_gui_still_ends_the_run(self, traci_mock) -> None:
+        _clock(traci_mock)
+        self._boundary(traci_mock)
+        live = LiveEngine(FakeSource(), ["sumo-gui"], show_clock=True)
+        live.start()
+        traci_mock.gui.getBoundary.side_effect = FatalTraCIError("closed")
+
+        with pytest.raises(FatalTraCIError):
+            live.step()  # run() turns this into a clean stop
+
+    def test_run_live_shows_the_clock_only_in_the_gui(self, tmp_path: Path) -> None:
+        for headless, expected in ((True, False), (False, True)):
+            with (
+                patch("simulator.engine.load_demand_profile"),
+                patch("simulator.engine.describe", return_value=""),
+                patch("simulator.engine.load_mode_edges"),
+                patch("simulator.engine.RandomIndividualSource"),
+                patch("simulator.engine.LiveEngine") as mock_engine,
+            ):
+                run_live(tmp_path / "n.net.xml", headless=headless)
+
+            assert mock_engine.call_args.kwargs["show_clock"] is expected
+
+
 class TestRun:
     def test_stops_at_max_sim_seconds_and_closes(self, traci_mock) -> None:
         _clock(traci_mock)
@@ -384,6 +540,8 @@ class TestBuildSumoArgs:
 class TestRunLive:
     def test_wires_source_and_engine_together(self, tmp_path: Path) -> None:
         with (
+            patch("simulator.engine.load_demand_profile") as mock_profile,
+            patch("simulator.engine.describe", return_value="a summary"),
             patch("simulator.engine.load_mode_edges") as mock_edges,
             patch("simulator.engine.RandomIndividualSource") as mock_source,
             patch("simulator.engine.LiveEngine") as mock_engine,
@@ -393,17 +551,47 @@ class TestRunLive:
                 headless=True,
                 seed=9,
                 max_sim_seconds=60,
+                demand_file=tmp_path / "demand.json",
             )
 
+        mock_profile.assert_called_once_with(tmp_path / "demand.json")
         mock_edges.assert_called_once_with(tmp_path / "n.net.xml")
         mock_source.assert_called_once_with(
-            mock_edges.return_value, start_time=START_TIME, seed=9
+            mock_edges.return_value,
+            mock_profile.return_value,
+            start_time=START_TIME,
+            seed=9,
         )
         args, kwargs = mock_engine.call_args
         assert args[0] is mock_source.return_value
         assert args[1][0] == "sumo"
-        assert kwargs == {"max_sim_seconds": 60}
+        assert kwargs == {"max_sim_seconds": 60, "show_clock": False}  # headless
         assert result is mock_engine.return_value.run.return_value
+
+    def test_logs_what_demand_is_used(self, tmp_path: Path, caplog) -> None:
+        with (
+            patch("simulator.engine.load_demand_profile"),
+            patch("simulator.engine.describe", return_value="15,000 trips/day"),
+            patch("simulator.engine.load_mode_edges"),
+            patch("simulator.engine.RandomIndividualSource"),
+            patch("simulator.engine.LiveEngine"),
+            caplog.at_level(logging.INFO, logger="simulator.engine"),
+        ):
+            run_live(tmp_path / "n.net.xml", headless=True)
+
+        assert "Demand: 15,000 trips/day" in caplog.text
+
+    def test_uses_the_committed_statistics_by_default(self, tmp_path: Path) -> None:
+        with (
+            patch("simulator.engine.load_demand_profile") as mock_profile,
+            patch("simulator.engine.describe", return_value=""),
+            patch("simulator.engine.load_mode_edges"),
+            patch("simulator.engine.RandomIndividualSource"),
+            patch("simulator.engine.LiveEngine"),
+        ):
+            run_live(tmp_path / "n.net.xml", headless=True)
+
+        mock_profile.assert_called_once_with(DEFAULT_DEMAND_JSON)
 
 
 def test_traci_mock_fixture_is_isolated() -> None:

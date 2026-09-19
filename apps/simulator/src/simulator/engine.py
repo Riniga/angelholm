@@ -25,6 +25,7 @@ from simulator.agents import (
     RandomIndividualSource,
     load_mode_edges,
 )
+from simulator.demand import DEFAULT_DEMAND_JSON, describe, load_demand_profile
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,19 @@ ID_PREFIX: dict[Mode, str] = {
 # the plan's spike), so a spawn retries with a fresh pair before giving up.
 MAX_SPAWN_ATTEMPTS = 10
 LOG_INTERVAL_SECONDS = 900  # one progress line per 15 simulated minutes
+HOURLY_LOG_SECONDS = 3600  # one "spawned in the last hour" line per simulated hour
+
+# MVP-006 Phase 5: the toolbar clock of sumo-gui is a narrow LCD that showed only MM:SS in a
+# real check (the hour was clipped, so 05:12 read as "12:00"-ish), and there is no TraCI
+# window-title setter and no view-setting for a time display. So the time of day is drawn as
+# a text label (the type of a POI, shown via the `poiType_show` view setting written in
+# `simulator.context_features`) that is moved to the view's top-left corner every step and so
+# stays put while panning and zooming.
+CLOCK_POI_ID = "clock"
+CLOCK_MARGIN_X = 0.03  # of the view width, from the left edge
+CLOCK_MARGIN_Y = 0.06  # of the view height, from the top edge
+CLOCK_POI_COLOR = (255, 0, 0, 255)
+CLOCK_POI_LAYER = 200
 
 
 class SimulationError(RuntimeError):
@@ -92,13 +106,18 @@ class LiveEngine:
         sumo_args: list[str],
         *,
         max_sim_seconds: float | None = None,
+        show_clock: bool = False,
     ) -> None:
         self._source = source
         self._sumo_args = sumo_args
         self._max_sim_seconds = max_sim_seconds
+        self._show_clock = show_clock
+        self._clock_text = ""
         self._counters: dict[Mode, int] = dict.fromkeys(Mode, 0)
         self._active_ids: dict[Mode, set[str]] = {mode: set() for mode in Mode}
         self._next_log = START_TIME + LOG_INTERVAL_SECONDS
+        self._next_hourly_log = START_TIME + HOURLY_LOG_SECONDS
+        self._spawned_at_last_hourly_log = dict.fromkeys(Mode, 0)
         self.stats = EngineStats()
 
     def start(self) -> None:
@@ -108,6 +127,8 @@ class LiveEngine:
         except (FatalTraCIError, TraCIException, OSError) as error:
             raise SimulationError(f"Could not start SUMO: {error}") from error
         self._configure_vtypes()
+        if self._show_clock:
+            self._create_clock()
 
     def _configure_vtypes(self) -> None:
         traci.vehicletype.setColor(CAR_TYPE_ID, _rgba(CAR_COLOR))
@@ -116,6 +137,44 @@ class LiveEngine:
         traci.vehicletype.setVehicleClass(BICYCLE_TYPE_ID, "bicycle")
         traci.vehicletype.setColor(BICYCLE_TYPE_ID, _rgba(BICYCLE_COLOR))
         traci.vehicletype.setMaxSpeed(BICYCLE_TYPE_ID, BICYCLE_MAX_SPEED)
+
+    def _view_corner(self) -> tuple[float, float]:
+        """Top-left of what the GUI view currently shows, in network coordinates."""
+        (x0, y0), (x1, y1) = traci.gui.getBoundary()
+        return (
+            x0 + (x1 - x0) * CLOCK_MARGIN_X,
+            y1 - (y1 - y0) * CLOCK_MARGIN_Y,
+        )
+
+    def _create_clock(self) -> None:
+        try:
+            x, y = self._view_corner()
+            self._clock_text = format_clock(START_TIME)[:5]
+            traci.poi.add(
+                CLOCK_POI_ID,
+                x,
+                y,
+                CLOCK_POI_COLOR,
+                poiType=self._clock_text,
+                layer=CLOCK_POI_LAYER,
+            )
+        except TraCIException as error:
+            # A missing clock must never stop the simulation.
+            logger.warning("Could not show the clock in the GUI: %s", error)
+            self._show_clock = False
+
+    def _update_clock(self, now: float) -> None:
+        """Keep the time-of-day label in the view corner and current to the minute."""
+        try:
+            x, y = self._view_corner()
+            traci.poi.setPosition(CLOCK_POI_ID, x, y)
+            text = format_clock(now)[:5]
+            if text != self._clock_text:
+                traci.poi.setType(CLOCK_POI_ID, text)
+                self._clock_text = text
+        except TraCIException as error:
+            # Cosmetic only: never stop the run for it, try again next step.
+            logger.debug("Could not update the clock label: %s", error)
 
     def _route_for(self, individual: Individual) -> list[str] | None:
         """The edges from origin to destination for the individual's mode, or None."""
@@ -197,9 +256,14 @@ class LiveEngine:
         for mode in self._source.due(now):
             self.spawn(mode)
         self._observe()
+        if self._show_clock:
+            self._update_clock(now)
         if now >= self._next_log:
             self._log_progress(now)
             self._next_log += LOG_INTERVAL_SECONDS
+        if now >= self._next_hourly_log:
+            self._log_hourly_spawns(now)
+            self._next_hourly_log += HOURLY_LOG_SECONDS
         return now
 
     def _log_progress(self, now: float) -> None:
@@ -212,6 +276,22 @@ class LiveEngine:
             active[Mode.PEDESTRIAN],
             sum(self.stats.spawned.values()),
             sum(self.stats.arrived.values()),
+        )
+
+    def _log_hourly_spawns(self, now: float) -> None:
+        """How many of each mode spawned in the last simulated hour — what the daily
+        rhythm and the mode mix look like in numbers, for long-run checks."""
+        last_hour = {
+            mode: self.stats.spawned[mode] - self._spawned_at_last_hourly_log[mode]
+            for mode in Mode
+        }
+        self._spawned_at_last_hourly_log = dict(self.stats.spawned)
+        logger.info(
+            "%s  spawned in the last hour: %d cars, %d bicycles, %d pedestrians",
+            format_clock(now),
+            last_hour[Mode.CAR],
+            last_hour[Mode.BICYCLE],
+            last_hour[Mode.PEDESTRIAN],
         )
 
     def run(self) -> EngineStats:
@@ -234,8 +314,9 @@ class LiveEngine:
         finally:
             try:
                 traci.close()
-            except (FatalTraCIError, TraCIException):
-                pass  # connection already gone (e.g. the GUI window was closed)
+            except (FatalTraCIError, TraCIException) as error:
+                # The connection is already gone (e.g. the GUI window was closed).
+                logger.debug("traci.close() failed: %s", error)
         return self.stats
 
 
@@ -271,10 +352,13 @@ def run_live(
     seed: int | None = None,
     max_sim_seconds: float | None = None,
     delay_ms: int = DEFAULT_DELAY_MS,
+    demand_file: Path = DEFAULT_DEMAND_JSON,
 ) -> EngineStats:
     """Start an empty Ängelholm at 05:00 and keep spawning individuals until stopped."""
+    profile = load_demand_profile(demand_file)
+    logger.info("Demand: %s", describe(profile))
     source = RandomIndividualSource(
-        load_mode_edges(net_file), start_time=START_TIME, seed=seed
+        load_mode_edges(net_file), profile, start_time=START_TIME, seed=seed
     )
     sumo_args = _build_sumo_args(
         net_file,
@@ -282,5 +366,8 @@ def run_live(
         gui_settings_file=gui_settings_file,
         delay_ms=delay_ms,
     )
-    engine = LiveEngine(source, sumo_args, max_sim_seconds=max_sim_seconds)
+    # The clock label needs a GUI view; headless `sumo` has none.
+    engine = LiveEngine(
+        source, sumo_args, max_sim_seconds=max_sim_seconds, show_clock=not headless
+    )
     return engine.run()
