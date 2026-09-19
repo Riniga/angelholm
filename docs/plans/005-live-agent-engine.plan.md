@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** In progress — Phase 1 done (agents module + tests); Phase 2 next.
+**Status:** In progress — Phases 1–2 done (agents module, live engine); Phase 3 next.
 
 ## 1. Goal
 
@@ -142,8 +142,9 @@ The engine is the only code touching `traci`. Everything is tested against a moc
    Ids are `car_<n>`, `bike_<n>`, `ped_<n>` from a counter (unique for the whole run).
    A `TraCIException` from `add` counts as a failed attempt, not a crash. After all
    attempts fail, count `skipped[mode] += 1` and return `False`.
-5. **Verify one open point for real before relying on it (record the answer as a code
-   comment):** each car/bicycle currently creates a permanent route id, and a run with no
+5. **[Done — answer: use `vehicle.add(id, "")` + `vehicle.setRoute`.]** Verified for real:
+   named `route.add` routes are never freed (31 routes left after 30 vehicles had all left),
+   empty-route + `setRoute` routes are (1 baseline route left). Original question: each car/bicycle currently creates a permanent route id, and a run with no
    end would accumulate them forever. Check whether `traci.vehicle.add(id, "")` followed by
    `traci.vehicle.setRoute(id, edges)` works on 1.27.1 without registering a route, or
    whether route ids can be removed. Use whichever avoids unbounded growth; if neither
@@ -276,6 +277,23 @@ Measurement phase; code changes are limited to the constants in `agents.py`.
 7. Set this plan's status and `docs/roadmap.md` (R2 line for MVP-005) to delivered.
 8. Show the diff and hand over commit messages; the owner does the commits and opens the PR
    (no push or merge from here).
+
+### Findings from Phase 2 (real run, 30 simulated minutes, headless)
+
+* Two real bugs found and fixed with regression tests: SUMO can reject a walking stage
+  (`Invalid arrivalPos`) *after* `person.add`, which left a standing person and made every
+  retry fail with "person already exists" (fix: remove the person, fresh id per attempt).
+* `Invalid arrivalPos` errors still appear in the log for some pedestrian routes (handled,
+  retried, no crash). Phase 5: find out which edges cause it and avoid them or pass an
+  explicit `arrivalPos`.
+* **Density is ~10x above the target.** With MVP-004's rates the concurrent count reached
+  ~2,200 after 30 simulated minutes (705 cars / 463 bicycles / 1,025 pedestrians) and was
+  still rising; MVP-004's batch never had that many at once. Phase 5 calibrates the rates
+  down; pedestrians (slow, long trips) dominate the count.
+* `getArrivedNumber()` does not report persons (confirmed), so arrivals are counted by
+  comparing id sets.
+* `departLane="best"` from step 4 was not used: the vehicle is added with an empty route, so
+  SUMO's default lane choice is used.
 
 ## 5. Risks / open questions
 
