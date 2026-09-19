@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** In progress — Phase 1 done (statistics file with labelled estimates); Phase 2 next.
+**Status:** In progress — Phases 1–2 done (statistics file; loader, validation and rate calculation); Phase 3 next.
 
 ## 1. Goal
 
@@ -318,6 +318,17 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
   15-minute line.
 
 ## Findings
+
+### Findings from Phase 2
+
+* `demand.py` imports `agents.Mode`, so Phase 3 must not import `demand` at runtime from
+  `agents.py` (circular): `agents.py` imports `Demand` only under `TYPE_CHECKING`
+  (`from __future__ import annotations` is already in place).
+* The committed file is now covered by tests (`TestCommittedFile`): 24 hours, honest labels,
+  a real daily rhythm (night weight ≪ 07:00/17:00 weights, 05:00 below the morning peak), cars
+  the largest share, every mode can spawn, and the peak car rate under 0.30 /s (the measured
+  gridlock ceiling is ~0.35 /s). A future edit that breaks these fails the test suite.
+* Tests: 113 (was 71), `demand.py` at 100 % coverage, total 99 %.
 
 ### Findings from Phase 1
 
