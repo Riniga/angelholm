@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** In progress — Phases 1–3 done (agents module, live engine, wired into the command); Phase 4 next.
+**Status:** In progress — Phases 1–4 done (agents module, live engine, wired into the command, static path removed); Phase 5 next.
 
 ## 1. Goal
 
@@ -277,6 +277,18 @@ Measurement phase; code changes are limited to the constants in `agents.py`.
 7. Set this plan's status and `docs/roadmap.md` (R2 line for MVP-005) to delivered.
 8. Show the diff and hand over commit messages; the owner does the commits and opens the PR
    (no push or merge from here).
+
+### Findings from Phase 4
+
+* `traffic.py`, `simulate.py` and their tests are deleted; what mattered from them is covered
+  by `test_agents.py` (edge filtering, curated weighting) and `test_engine.py` (vType colours,
+  bicycle cap, start failure). Tests: 71, coverage 99 %.
+* `_paths.py`/`test_paths.py` are **kept**: `network.py` still uses `sumo_tools_dir()` for
+  `osmGet.py`. (The test also checks `randomTrips.py` exists; harmless, left as is.)
+* The `.gitignore` entries for routes/`.sumocfg`/trips/weights were removed (only
+  `*-guisettings.xml` is still generated); stale local generated files were deleted.
+* `pre-commit run --all-files` passes; no dependency changes, so CI licence checks are
+  unaffected.
 
 ### Findings from Phase 3 (real runs)
 

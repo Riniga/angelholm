@@ -51,7 +51,7 @@ MANUAL_SCALE_X = 1.0197715118404214
 MANUAL_SCALE_Y = 0.9542362298774799
 MANUAL_ROTATION = -2.0
 
-# MVP-004 Phase 5: even with an explicit, distinct colour (simulator.traffic), pedestrians
+# MVP-004 Phase 5: even with an explicit, distinct colour (simulator.agents), pedestrians
 # were still hard to spot at normal size against a busy city network — confirmed for real
 # by the project owner in sumo-gui. `person_exaggeration`/`"given person/type color"` are
 # real sumo-gui view-settings attributes, confirmed from SUMO's own bundled

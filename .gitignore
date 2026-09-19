@@ -18,21 +18,13 @@ reports/
 # Example:
 # apps/<app-1>/runs/
 
-# apps/simulator: routes and the .sumocfg are cheap, deterministic outputs of our own code
-# (fixed seed) run against the already-committed network — regenerated on demand, not
-# committed (unlike the network/OSM extract, which need a live Overpass fetch to rebuild).
-apps/simulator/data/*.rou.xml
-apps/simulator/data/*.sumocfg
-apps/simulator/data/*.trips.xml
-# MVP-003: the GUI-settings XML embeds computed network coordinates, so it's regenerated
-# on demand like routes/.sumocfg above. The background image itself
+# apps/simulator: the GUI-settings XML embeds computed network coordinates, so it's
+# regenerated on demand (MVP-003), not committed. The background image itself
 # (apps/simulator/data/context-background.png) is a static, committed asset, not
-# regenerated — not gitignored.
+# regenerated — not gitignored. (Route/.sumocfg/edge-weight files were generated before
+# MVP-005 replaced pre-generated traffic with the live TraCI engine; nothing produces them
+# any more, so their ignore entries were removed.)
 apps/simulator/data/*-guisettings.xml
-# MVP-004: entry/exit edge-weight files, regenerated on demand from the committed
-# entry-exit-edges.json — same reasoning as routes/.sumocfg above.
-apps/simulator/data/*.src.xml
-apps/simulator/data/*.dst.xml
 
 # IDE
 .vscode/
