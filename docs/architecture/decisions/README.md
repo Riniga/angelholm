@@ -23,3 +23,4 @@ mellan dem. Se [`docs/standards/documentation.md`](../../standards/documentation
 | [ADR-006](ADR-006-sumo-and-openstreetmap.md) | Use SUMO and OpenStreetMap as the simulation engine and geographic data source |
 | [ADR-007](ADR-007-shapely-for-boundary-polygons.md) | Use `netconvert --keep-edges.in-geo-boundary` and `shapely` for outline-based network clipping |
 | [ADR-008](ADR-008-basemap-image-for-context-features.md) | Use the project owner's own basemap image as a georeferenced sumo-gui background |
+| [ADR-009](ADR-009-weights-prefix-and-curated-entry-exit-edges.md) | Bias car trips toward a curated entry/exit edge list via `--weights-prefix` |

@@ -67,22 +67,28 @@ Areas Not Yet Implemented" below.
 │   ├── copilot-instructions.md    Thin pointer to AGENTS.md (Copilot specific)
 │   └── pull_request_template.md   Definition-of-Done checklist + AI-assistance checkbox
 ├── scripts/
-│   └── scan_instruction_files.py  CI helper: scans AGENTS.md/CLAUDE.md for hidden Unicode
+│   ├── scan_instruction_files.py  CI helper: scans AGENTS.md/CLAUDE.md for hidden Unicode
+│   ├── extract_coverage_outline.py     One-off (MVP-002): digitize mapoutline.png -> GeoJSON
+│   ├── convert_context_background.py   One-off (MVP-003): map_plain.gif -> committed PNG
+│   └── list_entry_exit_candidates.py   One-off (MVP-004): list candidate entry/exit edges
 ├── apps/
-│   └── simulator/                 First real application (MVP-001) — see "Major
+│   └── simulator/                 First real application (MVP-001..004) — see "Major
 │       ├── pyproject.toml         Components" below for what it does
-│       ├── src/simulator/         network.py, traffic.py, simulate.py, run.py (the
-│       │                          `simulator` console command), _paths.py (shared helper)
-│       ├── tests/                 22 tests, mocked/deterministic, 99% coverage
-│       └── data/                  angelholm_bbox.osm.xml, network.net.xml — committed
-│                                   fixtures; routes/.sumocfg regenerated on demand
+│       ├── src/simulator/         network.py, traffic.py, context_features.py,
+│       │                          simulate.py, run.py (the `simulator` console command),
+│       │                          _paths.py (shared helper)
+│       ├── tests/                 50 tests, mocked/deterministic, 99% coverage
+│       └── data/                  angelholm_bbox.osm.xml, network.net.xml,
+│                                   coverage-outline.geojson, entry-exit-edges.json,
+│                                   context-background.png — committed inputs;
+│                                   routes/.sumocfg/weights/GUI settings regenerated
 └── docs/
     ├── vision.md                  Project-specific — long-term purpose and principles
     ├── roadmap.md                 Project-specific — R0/R1–R5 roadmap areas, MVP index
     ├── architecture/
     │   ├── overview.md            This file
     │   ├── current-state.md       Quick-scan status table
-    │   └── decisions/             6 ADRs + index + ADR-TEMPLATE.md
+    │   └── decisions/             9 ADRs + index + ADR-TEMPLATE.md
     ├── development/               setup.md, environment.md, tools.md, methodology.md,
     │                               repo-settings.md, secrets-rotation.md, uat-checklist.md
     ├── standards/                 coding.md, testing.md, git.md, documentation.md,
@@ -93,10 +99,10 @@ Areas Not Yet Implemented" below.
     │                               gap-register rows, 1 exception (`EX-001`)
     ├── claude-prompts/             Generic bootstrap/plan/MVP-completion prompts for Claude
     │                               Code, including this file's own generating prompt
-    ├── mvp/                        000-workspace-foundation.md (closed, delivered),
-    │                               001-first-traffic-simulator.md (closed, delivered)
-    └── plans/                      000-workspace-foundation.plan.md (complete),
-                                    001-first-traffic-simulator.plan.md (complete)
+    ├── mvp/                        000..004 (all closed, delivered): workspace foundation,
+    │                               first traffic simulator, extended map area, map
+    │                               context features, multimodal city
+    └── plans/                      000..004 .plan.md (all complete)
 ```
 
 `packages/`, `tests/` (repo-level), and `data/` (repo-level) do not exist yet. This
@@ -106,9 +112,9 @@ structure should be updated in the same PR as any further change to it.
 
 ## Major Components
 
-Two components have a first, real implementation (`apps/simulator`, MVP-001, extended by
-MVP-002). The rest are architectural responsibilities identified from `docs/vision.md`, not
-yet built.
+Two components have a real implementation (`apps/simulator`, MVP-001, extended by
+MVP-002/003/004). The rest are architectural responsibilities identified from
+`docs/vision.md`, not yet built.
 
 ### Geographic Model
 

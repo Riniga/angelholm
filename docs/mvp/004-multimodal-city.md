@@ -177,4 +177,8 @@ pre-existing documentation gap found while updating `overview.md` for this MVP â
 `defusedxml` (added for a Semgrep SAST fix during MVP-003's own PR) had never been
 recorded in "Existing Dependencies" at all.
 
+**Decision record:** `ADR-009` (`--weights-prefix` + curated entry/exit list, over
+`--fringe-factor`; plain-text `<vType>` post-processing to avoid re-triggering the Semgrep
+`use-defused-xml` rule).
+
 **Final test/coverage state:** 50 tests, 99.57% coverage (floor 95%).

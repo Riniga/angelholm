@@ -54,9 +54,9 @@ DEFAULT_ENTRY_EXIT_JSON = (
 # entry/exit edge relative to every other eligible edge's weight of 1, when biasing car
 # trip generation via randomTrips.py --weights-prefix. Verified for real against the
 # actual network + the 8 curated edges in apps/simulator/data/entry-exit-edges.json: 200
-# yields ~71% of generated car trips starting or ending at a curated edge (comfortably
-# above the MVP's "majority" acceptance criterion), not just estimated from the edge
-# counts.
+# yields ~71-74% of generated car trips (measured at both 80 and 282 trips) starting or
+# ending at a curated edge — comfortably above the MVP's "majority" acceptance
+# criterion, not just estimated from the edge counts.
 DEFAULT_ENTRY_EXIT_BOOST_WEIGHT = 200.0
 
 # MVP-004 Phase 5: confirmed for real that without an explicit colour, every mode falls
@@ -67,12 +67,11 @@ CAR_COLOR = "1,1,0"  # yellow — SUMO's own default, made explicit rather than 
 BICYCLE_COLOR = "0,1,0"  # green
 PEDESTRIAN_COLOR = "1,0,1"  # magenta — high-contrast against the map background
 
-# MVP-004 Phase 5: confirmed for real (sumo --tripinfo-output) that SUMO's own implicit
-# bicycle speed cap already averaged ~19 km/h vs. cars' ~34 km/h on this network — already
-# roughly half, but the project owner watched it in sumo-gui and still saw them as too
-# close on faster roads (bicycles aren't capped independently of the road's own speed
-# limit otherwise). An explicit, deliberately lower cap, in m/s (SUMO's own <vType
-# maxSpeed=...> unit).
+# MVP-004 Phase 5: SUMO's own implicit bicycle speed cap already averaged ~19 km/h vs.
+# cars' ~34 km/h on this network (confirmed via sumo --tripinfo-output), but the project
+# owner watched it in sumo-gui and still saw bicycles as too close to car speed. An
+# explicit, deliberately lower cap gives a clear, consistent gap (~14 km/h measured after
+# this was applied). In m/s, SUMO's own <vType maxSpeed=...> unit.
 BICYCLE_MAX_SPEED = 4.17  # ~15 km/h
 
 
@@ -135,9 +134,7 @@ def _customize_vtype(
     `max_speed` in m/s), so different modes render distinguishably — and move
     realistically relative to each other — in `sumo-gui`. Confirmed for real that with no
     explicit colour anywhere, every mode falls back to the same default and is visually
-    indistinguishable; bicycles without an explicit speed cap can look barely slower than
-    cars on faster roads, even though their SUMO-default cap (~22 km/h) is already
-    reasonable on average — the project owner asked for a clearer, more deliberate gap.
+    indistinguishable (see `BICYCLE_MAX_SPEED` for why speed is set explicitly too).
 
     Plain text substitution/insertion, not full XML parsing: the file's shape is fully
     known (our own `randomTrips.py` output), and this avoids importing the stdlib
