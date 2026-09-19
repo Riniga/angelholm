@@ -25,6 +25,7 @@ from simulator.agents import (
     RandomIndividualSource,
     load_mode_edges,
 )
+from simulator.demand import DEFAULT_DEMAND_JSON, describe, load_demand_profile
 
 logger = logging.getLogger(__name__)
 
@@ -271,10 +272,13 @@ def run_live(
     seed: int | None = None,
     max_sim_seconds: float | None = None,
     delay_ms: int = DEFAULT_DELAY_MS,
+    demand_file: Path = DEFAULT_DEMAND_JSON,
 ) -> EngineStats:
     """Start an empty Ängelholm at 05:00 and keep spawning individuals until stopped."""
+    profile = load_demand_profile(demand_file)
+    logger.info("Demand: %s", describe(profile))
     source = RandomIndividualSource(
-        load_mode_edges(net_file), start_time=START_TIME, seed=seed
+        load_mode_edges(net_file), profile, start_time=START_TIME, seed=seed
     )
     sumo_args = _build_sumo_args(
         net_file,

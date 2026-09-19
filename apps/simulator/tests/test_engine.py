@@ -12,6 +12,7 @@ from traci.exceptions import FatalTraCIError, TraCIException
 
 from simulator import engine
 from simulator.agents import Individual, Mode
+from simulator.demand import DEFAULT_DEMAND_JSON
 from simulator.engine import (
     BICYCLE_TYPE_ID,
     MAX_SPAWN_ATTEMPTS,
@@ -384,6 +385,8 @@ class TestBuildSumoArgs:
 class TestRunLive:
     def test_wires_source_and_engine_together(self, tmp_path: Path) -> None:
         with (
+            patch("simulator.engine.load_demand_profile") as mock_profile,
+            patch("simulator.engine.describe", return_value="a summary"),
             patch("simulator.engine.load_mode_edges") as mock_edges,
             patch("simulator.engine.RandomIndividualSource") as mock_source,
             patch("simulator.engine.LiveEngine") as mock_engine,
@@ -393,17 +396,47 @@ class TestRunLive:
                 headless=True,
                 seed=9,
                 max_sim_seconds=60,
+                demand_file=tmp_path / "demand.json",
             )
 
+        mock_profile.assert_called_once_with(tmp_path / "demand.json")
         mock_edges.assert_called_once_with(tmp_path / "n.net.xml")
         mock_source.assert_called_once_with(
-            mock_edges.return_value, start_time=START_TIME, seed=9
+            mock_edges.return_value,
+            mock_profile.return_value,
+            start_time=START_TIME,
+            seed=9,
         )
         args, kwargs = mock_engine.call_args
         assert args[0] is mock_source.return_value
         assert args[1][0] == "sumo"
         assert kwargs == {"max_sim_seconds": 60}
         assert result is mock_engine.return_value.run.return_value
+
+    def test_logs_what_demand_is_used(self, tmp_path: Path, caplog) -> None:
+        with (
+            patch("simulator.engine.load_demand_profile"),
+            patch("simulator.engine.describe", return_value="15,000 trips/day"),
+            patch("simulator.engine.load_mode_edges"),
+            patch("simulator.engine.RandomIndividualSource"),
+            patch("simulator.engine.LiveEngine"),
+            caplog.at_level(logging.INFO, logger="simulator.engine"),
+        ):
+            run_live(tmp_path / "n.net.xml", headless=True)
+
+        assert "Demand: 15,000 trips/day" in caplog.text
+
+    def test_uses_the_committed_statistics_by_default(self, tmp_path: Path) -> None:
+        with (
+            patch("simulator.engine.load_demand_profile") as mock_profile,
+            patch("simulator.engine.describe", return_value=""),
+            patch("simulator.engine.load_mode_edges"),
+            patch("simulator.engine.RandomIndividualSource"),
+            patch("simulator.engine.LiveEngine"),
+        ):
+            run_live(tmp_path / "n.net.xml", headless=True)
+
+        mock_profile.assert_called_once_with(DEFAULT_DEMAND_JSON)
 
 
 def test_traci_mock_fixture_is_isolated() -> None:

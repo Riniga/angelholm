@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** In progress — Phases 1–2 done (statistics file; loader, validation and rate calculation); Phase 3 next.
+**Status:** In progress — Phases 1–3 done (statistics file; loader; time-varying source); Phase 4 next.
 
 ## 1. Goal
 
@@ -318,6 +318,21 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
   15-minute line.
 
 ## Findings
+
+### Findings from Phase 3
+
+* Thinning implemented in `RandomIndividualSource`; `DEFAULT_RATES` removed. Statistical tests
+  over 4 simulated days at a fixed seed (busy hour ≈ 10× a quiet hour; hourly counts, daily
+  total, mode split and day-to-day shape all within the stated tolerances) pass on the first
+  run; they take ~3 s, so a fixed seed keeps them deterministic, not flaky.
+* **Phase 4 steps 1–2 were done here on purpose:** `run_live()` needed the new `demand`
+  argument or the live command would have been broken at this commit. `run_live(...,
+  demand_file=DEFAULT_DEMAND_JSON)` now loads the profile, logs `Demand: <describe()>` and passes
+  it to the source. Left for Phase 4: `--stats`, readable CLI error, hourly-spawn log line.
+* First real 2-hour run (seed 1, 05:00–07:00): quiet start (about 50 travellers at 05:15),
+  rising towards the rush (~130 at 07:00), cars now the largest group (660 spawned vs 246
+  pedestrians and 151 bicycles) — the opposite of MVP-005's bike-heavy look. Peak concurrent 147.
+  Not yet a calibration: the busy hours are still ahead.
 
 ### Findings from Phase 2
 
