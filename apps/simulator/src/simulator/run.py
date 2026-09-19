@@ -1,11 +1,16 @@
-"""Documented, repeatable entrypoint: build (if needed) and run the Ängelholm traffic
-simulation, covering the area outlined in docs/architecture/mapoutline.png (MVP-002; grown
-from MVP-001's original, smaller neighbourhood extract).
+"""Documented, repeatable entrypoint: build (if needed) and run the live Ängelholm
+simulation, covering the area outlined in docs/architecture/mapoutline.png (MVP-002).
+
+Since MVP-005 the city starts empty at 05:00 and individuals are spawned live through TraCI
+until the run is stopped — there are no pre-generated route files any more.
 
 Installed as the `simulator` console command (`pip install -e apps/simulator`):
 
-    simulator                  # launch sumo-gui, reusing the committed network
-    simulator --headless       # run headlessly (no GUI), e.g. for automation
+    simulator                    # launch sumo-gui, reusing the committed network; runs
+                                 # until you close the window
+    simulator --headless         # no GUI; runs until interrupted (Ctrl+C)
+    simulator --headless --max-seconds 600   # stop after 600 simulated seconds
+    simulator --seed 1           # reproducible pattern for debugging
     simulator --rebuild-network  # re-fetch OSM data and rebuild the network first
 """
 
@@ -15,20 +20,27 @@ import argparse
 import logging
 from pathlib import Path
 
+from simulator.agents import Mode
 from simulator.context_features import write_gui_settings
+from simulator.engine import EngineStats, run_live
 from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
-from simulator.simulate import run_gui, run_headless
-from simulator.traffic import (
-    generate_bicycle_traffic,
-    generate_pedestrian_traffic,
-    generate_traffic,
-    write_sumocfg,
-)
 
 logger = logging.getLogger(__name__)
 
 # apps/simulator/src/simulator/run.py -> apps/simulator/data
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+
+
+def _log_summary(stats: EngineStats) -> None:
+    for mode in Mode:
+        logger.info(
+            "%s: spawned %d, arrived %d, skipped %d (no route)",
+            mode.value,
+            stats.spawned[mode],
+            stats.arrived[mode],
+            stats.skipped[mode],
+        )
+    logger.info("Peak concurrent travellers: %d", stats.peak_active)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +59,19 @@ def main(argv: list[str] | None = None) -> int:
         help="Re-fetch OSM data and rebuild the network instead of reusing the "
         "committed one.",
     )
+    parser.add_argument(
+        "--max-seconds",
+        type=float,
+        default=None,
+        help="Stop after this many simulated seconds. Default: run until stopped.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed the random spawning (patterns, not exact individuals, are what "
+        "matters; useful for debugging). Default: different every run.",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -56,31 +81,22 @@ def main(argv: list[str] | None = None) -> int:
         boundary_polygon = load_boundary_polygon(DATA_DIR / "coverage-outline.geojson")
         build_network(osm_file, net_file, boundary_polygon=boundary_polygon)
 
-    route_file = DATA_DIR / "angelholm.rou.xml"
-    bicycle_route_file = DATA_DIR / "angelholm.bikes.rou.xml"
-    pedestrian_route_file = DATA_DIR / "angelholm.peds.rou.xml"
-    config_file = DATA_DIR / "angelholm.sumocfg"
-    generate_traffic(net_file, route_file)
-    generate_bicycle_traffic(net_file, bicycle_route_file)
-    generate_pedestrian_traffic(net_file, pedestrian_route_file)
-    write_sumocfg(
-        net_file,
-        route_file,
-        config_file,
-        additional_route_files=[bicycle_route_file, pedestrian_route_file],
-    )
-
-    if args.headless:
-        run_headless(config_file)
-    else:
-        # GUI-only: the map-context background is read by sumo-gui via
-        # --gui-settings-file, never touched by the headless simulation engine, so this
-        # is skipped entirely for --headless.
+    # GUI-only: the map-context background is read by sumo-gui via --gui-settings-file,
+    # never touched by the headless simulation engine, so it is skipped for --headless.
+    gui_settings_file = None
+    if not args.headless:
         gui_settings_file = write_gui_settings(
             net_file, DATA_DIR / "angelholm-guisettings.xml"
         )
-        run_gui(config_file, gui_settings_file=gui_settings_file)
 
+    stats = run_live(
+        net_file,
+        headless=args.headless,
+        gui_settings_file=gui_settings_file,
+        seed=args.seed,
+        max_sim_seconds=args.max_seconds,
+    )
+    _log_summary(stats)
     return 0
 
 

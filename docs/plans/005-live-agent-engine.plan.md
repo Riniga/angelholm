@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** In progress — Phases 1–2 done (agents module, live engine); Phase 3 next.
+**Status:** In progress — Phases 1–3 done (agents module, live engine, wired into the command); Phase 4 next.
 
 ## 1. Goal
 
@@ -277,6 +277,15 @@ Measurement phase; code changes are limited to the constants in `agents.py`.
 7. Set this plan's status and `docs/roadmap.md` (R2 line for MVP-005) to delivered.
 8. Show the diff and hand over commit messages; the owner does the commits and opens the PR
    (no push or merge from here).
+
+### Findings from Phase 3 (real runs)
+
+* `simulator --headless --max-seconds 600 --seed 1` finished by itself in ~4.5 s of real time
+  with spawns in all three modes and exit code 0.
+* `simulator` (GUI): `sumo-gui` opened and started stepping on its own (`--start` works), spawned
+  ~220 individuals in the first ~25 real seconds at the 200 ms/step pace; killing `sumo-gui`
+  (as closing the window does) ended the process cleanly ("SUMO closed — stopping", summary
+  printed, exit 0, no traceback). Visual judgement stays with the owner in Phase 6.
 
 ### Findings from Phase 2 (real run, 30 simulated minutes, headless)
 
