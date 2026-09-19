@@ -58,6 +58,13 @@ MANUAL_ROTATION = -2.0
 # tools/game/hiking/view.xml example (a pedestrian-focused game mode), not guessed.
 PEDESTRIAN_EXAGGERATION = 5.0
 
+# MVP-006 Phase 5: the simulated time of day is drawn as the "type" text of a POI that
+# `simulator.engine` keeps in the view corner (sumo-gui's own toolbar clock clips the hour).
+# `poiType_show`/`poiType_size`/`poiType_color` are real view-settings attributes, confirmed
+# for real by a run in sumo-gui (a red label appeared), not guessed. Size in sumo-gui's own
+# text units; tuned by eye.
+CLOCK_TEXT_SIZE = 60
+
 
 class ContextFeatureError(RuntimeError):
     """Raised when placing the map context background fails."""
@@ -118,6 +125,7 @@ def write_gui_settings(
                 <entry color="blue"/>
             </colorScheme>
         </persons>
+        <pois poiType_show="1" poiType_size="{CLOCK_TEXT_SIZE}" poiType_color="red"/>
     </scheme>
 </viewsettings>
 """,

@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** In progress — Phases 1–4 done (statistics file; loader; time-varying source; wired into the run, `--stats`, hourly log); Phase 5 (readable time of day) next.
+**Status:** In progress — Phases 1–5 done (statistics file; loader; time-varying source; wired into the run; readable clock); Phase 6 (long runs and calibration) next.
 
 ## 1. Goal
 
@@ -318,6 +318,32 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
   15-minute line.
 
 ## Findings
+
+### Findings from Phase 5
+
+Checked for real in `sumo-gui` (screenshots of the actual window), in the plan's order:
+
+1. **`sumo-gui`'s toolbar clock is not enough.** It is a narrow green LCD. Two readings taken
+   a while after start showed four digits (`0050`, later `0150`), i.e. the *minutes and
+   seconds*; with the run starting at 05:00 (18000 s) the hour is clipped away, which is
+   exactly the owner's "not intuitive what time it is". (Reading of the seven-segment digits
+   from screenshots, consistent across two captures; not confirmed against SUMO's source.)
+2. **No view setting for a time display:** `viewsettings_file.xsd` has none (its only `time`
+   attributes belong to breakpoints), and `traci.gui` has no window-title setter.
+3. **A POI label works and is what was built.** `traci.poi.add(...)` with a `poiType` text,
+   shown by the view settings `<pois poiType_show="1" poiType_size="60" poiType_color="red"/>`
+   (attribute names found by searching `sumo-gui.exe`'s strings, then confirmed by a prototype
+   in the scratchpad). The engine keeps the POI at the top-left corner of the current view
+   (`traci.gui.getBoundary()` every step) so it stays put while panning/zooming, and changes
+   its text only when the minute changes. Real `simulator` run: a red `05:01` label is
+   visible in the view corner, counting up.
+4. **Only in the GUI:** headless `sumo` has no view, so `run_live()` passes
+   `show_clock=not headless`. Creating or updating the label is cosmetic: a `TraCIException`
+   is logged once at creation (and turns the clock off) or ignored at update, never stopping
+   the run; a closed GUI (`FatalTraCIError`) still ends the run cleanly.
+5. Tests: 138 (was 129) with `engine.py` and `context_features.py` at 100 %.
+6. The toolbar `Delay (ms)` field is unchanged (200); how long a simulated second takes stays a
+   backlog item (a friendlier speed control).
 
 ### Findings from Phase 4
 

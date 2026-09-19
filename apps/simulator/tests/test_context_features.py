@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from simulator.context_features import (
+    CLOCK_TEXT_SIZE,
     DEFAULT_BACKGROUND_IMAGE,
     MANUAL_ROTATION,
     PEDESTRIAN_EXAGGERATION,
@@ -71,6 +72,9 @@ class TestWriteGuiSettings:
         # MVP-004 Phase 5: pedestrians were hard to spot at normal size — confirmed
         # present, not just that *a* scheme exists.
         assert f'person_exaggeration="{PEDESTRIAN_EXAGGERATION}"' in content
+        # MVP-006 Phase 5: the time-of-day label is a POI whose type text must be shown.
+        assert 'poiType_show="1"' in content
+        assert f'poiType_size="{CLOCK_TEXT_SIZE}"' in content
 
     def test_image_path_written_relative_to_settings_dir(self, tmp_path: Path) -> None:
         net_file = tmp_path / "test.net.xml"
