@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** Not started.
+**Status:** In progress — Phase 1 done (agents module + tests); Phase 2 next.
 
 ## 1. Goal
 
