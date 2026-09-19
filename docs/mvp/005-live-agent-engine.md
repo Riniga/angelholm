@@ -134,3 +134,24 @@ To be answered by checking, not by assuming:
   the new engine reuses (colours, weights)? Leaning toward deleting what is unused.
 * Does replacing `randomTrips.py` warrant an ADR (TraCI-driven live engine versus
   pre-generated routes)? Expected yes.
+
+## Outcome at close (2026-09-19)
+
+Built and verified headless; **the final visual sign-off by the project owner at the calibrated rates is still open** (see the last bullet). Each criterion below was checked for real, with the numbers from `docs/plans/005-live-agent-engine.plan.md`.
+
+* **Empty city at 05:00, individuals appearing one at a time.** Met. `simulator.engine` starts SUMO with no traffic at `--begin 18000`; spawns are driven by `RandomIndividualSource` (Poisson arrivals per mode). Confirmed in `sumo-gui`: it started stepping on its own and filled up.
+* **All three modes, only on suitable network parts, reaching their destinations.** Met. Edge pools per mode come from the network's own permissions (1,668 car / 3,739 bicycle / 4,115 pedestrian edges). Over a 6-hour run 2,111 of 2,159 cars, 1,453 of 1,487 bicycles and 1,462 of 1,573 pedestrians had arrived (the rest still under way at the end); no spawn was skipped.
+* **Arrived individuals removed; concurrent count stabilises.** Met, after calibration. MVP-004's batch rates gridlocked (~5,000 present and rising after 2 simulated hours); the calibrated 0.10 / 0.07 / 0.07 spawns per second held ~200 concurrent (≈ 50 cars / 45 bicycles / 105 pedestrians) flat over 6 and 24 simulated hours, with a flat ~85 MB Python process.
+* **Majority of car trips at the 8 entry/exit roads.** Met: 74.5 % (1,609 of 2,159) of live car spawns, against 73.8 % in MVP-004.
+* **No built-in end; bounded run for tests/CI.** Met. The loop runs until interrupted or the GUI closes (clean exit, verified); `--max-seconds` bounds it. The clock wraps correctly past midnight (checked over 24 simulated hours).
+* **Static path removed.** Met. `traffic.py`, `simulate.py`, `randomTrips.py` usage, generated `.sumocfg`/route files and their tests are gone.
+* **Earlier criteria still hold.** Met: network unchanged (4,250 / 1,756), basemap and colours unaffected (colours now set through TraCI), 71 tests pass at 99.69 % coverage (floor 95 %), pre-commit passes.
+* **Owner watches it live and confirms.** Partly: the owner ran the engine in `sumo-gui` at the earlier, far higher density and found it "clearly denser than expected but working surprisingly well". Confirmation at the calibrated ~200 density is still pending; the rates are a one-line change in `DEFAULT_RATES` if it feels too sparse.
+
+**Real bugs found by running it, fixed with regression tests:** SUMO rejecting a walking stage (`Invalid arrivalPos`) after the person was added, which left a standing person and made every retry fail with "already exists"; named routes never being freed (a leak in an endless run — avoided with empty-route + `setRoute`); `getArrivedNumber()` not covering persons (arrivals are counted from id sets); MVP-004's rates gridlocking an open-ended run.
+
+**Observations for later MVPs (not fixed here):** in 24 simulated hours, ~64 teleports of stuck vehicles at a few recurring junctions and ~31 vehicle–person collisions; the owner also saw pedestrians walking in the middle of roads and sometimes blocking cyclists. These point at routing, crossings and signal programs rather than the engine. Roughly 545 harmless `No connection between edge` warnings and ~275 handled `Invalid arrivalPos` errors appear per 6 simulated hours.
+
+**Decision record:** `ADR-010` (live TraCI engine instead of pre-generated routes); ADR-009 is partly superseded.
+
+**Final test/coverage state:** 71 tests, 99.69 % coverage (floor 95 %).

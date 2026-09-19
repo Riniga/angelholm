@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** In progress — Phases 1–5 done (engine built, wired in, static path removed, rates calibrated); Phase 6 (owner review, ADR, docs, close) next.
+**Status:** Phases 1–6 done except the project owner's final sign-off in `sumo-gui` at the calibrated rates (Phase 6 step 1). ADR-010 and documentation written; see the MVP's "Outcome at close".
 
 ## 1. Goal
 

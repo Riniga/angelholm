@@ -8,7 +8,7 @@ Each roadmap area is implemented through one or more MVPs. Once an MVP has been 
 
 ## Current Status
 
-MVP-000 through MVP-004 are delivered: a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a live, statistics-driven agent engine (R2) and then infrastructure what-if experiments (R3).
+MVP-000 through MVP-004 are delivered, and MVP-005 (Live Agent Engine) is built and awaiting the project owner's final sign-off: a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a live, statistics-driven agent engine (R2) and then infrastructure what-if experiments (R3).
 
 ---
 
@@ -43,7 +43,7 @@ Establish the basic simulation environment and prove that a real city can be rep
 
 ---
 
-## R2 – People and Daily Mobility (Planned)
+## R2 – People and Daily Mobility (In progress)
 
 Move from generated traffic to a population whose individual travel needs create the traffic.
 
