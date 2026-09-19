@@ -1,0 +1,31 @@
+{
+  "_comment": "MVP-006 demand statistics: how many trips the live engine spawns per day, how they are spread over the 24 hours, and how they split between car, bicycle and pedestrian. Edit values here, not in Python; the engine reads this file at start-up (docs/plans/006-statistics-database.plan.md). Keep every block's 'status' honest: 'source' only for a real published figure with a reference in 'source', otherwise 'estimate'. Keys starting with an underscore are ignored by the loader. STABILITY CEILING: the city was measured (MVP-005 plan, Phase 5) to scale roughly linearly with the spawn rate up to about 0.35 cars per second and to gridlock well before 0.7, so the busiest hour's car rate (total_trips_per_day x busiest hour's share x car share / 3600) must stay clearly below ~0.35; a jam that builds in the rush and does not clear at night shows up as day-over-day growth in the concurrent count. Calibration history: MVP-005 ran a constant 0.10 cars / 0.07 bicycles / 0.07 pedestrians per second, which held about 200 concurrent travellers.",
+
+  "total_trips_per_day": {
+    "value": 15000,
+    "status": "estimate",
+    "source": "none",
+    "note": "Chosen so that the average car rate is about MVP-005's 0.10 per second (15000 x 0.60 / 86400 = 0.104) and the busiest hour stays under the stability ceiling. NOT the municipality's real trip count (that is MVP-008); it is a single scale for the whole day that keeps the simulated city stable."
+  },
+
+  "hourly_profile": {
+    "status": "estimate",
+    "source": "none",
+    "note": "Relative weights for hours 00-23 (the loader normalises them, so they need not sum to 100). Shape only: quiet night, morning rush 07-08, a lunch bump, afternoon rush 16-17, evening decline. Candidates to replace it with real figures: Trafikverket 'Trafikvariation och lastbilsandelar' (hourly variation types for urban roads) and Trafikanalys RVU Sverige (trip start times); neither could be read and used yet, see docs/plans/006-statistics-database.plan.md 'Findings from Phase 1'.",
+    "weights": [
+      1.0, 0.5, 0.4, 0.4, 1.0, 2.5,
+      5.0, 8.5, 7.5, 5.5, 5.0, 5.5,
+      6.5, 5.5, 5.5, 6.5, 8.0, 8.5,
+      6.0, 4.5, 3.5, 2.5, 1.8, 1.4
+    ]
+  },
+
+  "mode_shares": {
+    "status": "estimate",
+    "source": "none",
+    "note": "Shares of TRIPS SPAWNED, not of what is visible on screen: bicycles and especially pedestrians stay in the network longer per trip than cars, so a plausible trip share can still look bicycle- or pedestrian-heavy. Cars deliberately the largest group (MVP-005 review: cars should dominate, bicycles looked too many). Candidate real source: Trafikanalys RVU Sverige (share of trips by main mode); not yet read and used.",
+    "car": 0.60,
+    "bicycle": 0.15,
+    "pedestrian": 0.25
+  }
+}

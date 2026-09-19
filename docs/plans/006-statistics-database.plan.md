@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** Not started.
+**Status:** In progress — Phase 1 done (statistics file with labelled estimates); Phase 2 next.
 
 ## 1. Goal
 
@@ -316,3 +316,35 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
 * **Open: does adding a per-hour log line clutter long runs?** Phase 4 keeps it to one line per
   simulated hour; if it is too noisy in the GUI console it can be folded into the existing
   15-minute line.
+
+## Findings
+
+### Findings from Phase 1
+
+Bounded look (a few searches and fetches, not a research project) at real figures. **Result: no
+real figures were extracted or used; every value in `demand-statistics.json` is a labelled
+estimate.** What was found:
+
+* **Trafikverket, "Trafikvariation och lastbilsandelar" (TMALL 0004 rapport, `bransch.trafikverket.se`).**
+  Exists and, according to its own description, has traffic-variation schemas for urban and
+  rural roads (variation by month, weekday and hour, with hourly flows for passenger cars
+  derived from ÅDT). This is the best candidate for the *hourly profile*. The URL from the
+  search result returned HTTP 404 when fetched, so the table itself was not read and its usage
+  terms were not checked. Traffic-count data (`Vägtrafik- och hastighetsdata`) is a separate
+  Trafikverket service, not looked into further.
+* **Trafikanalys, "RVU Sverige" (national travel-habit survey).** Reports mode shares and trip
+  start times (in the search summary: most weekday trips start 07:00–08:00, largely work and
+  school). The 2011–2014 and 2015–2016 report PDFs were fetched but their text was not
+  extractable in this session, so no numbers were read. A search snippet mentioned car at 58 %
+  of trips in Västra Götaland's own regional survey — an unverified pointer only, *not* used as a
+  figure, though it makes a ~60 % car share plausible as a first estimate. Candidate for
+  the *mode shares* and a cross-check of the profile.
+* **Not looked for:** anything specific to Ängelholm (municipal counts, SCB local data). To be
+  revisited when MVP-008 (realistic scale) needs local numbers.
+
+Consequence: the file uses estimates (15,000 trips/day, the 24 weights in the plan, 60/15/25
+shares), each marked `"status": "estimate"` with the candidate real sources named in its note.
+Checked arithmetic on the committed values: 24 weights, peak hour = 8.25 % of the day (~2.0× the
+average hour), average car rate 0.104 /s, **peak car rate 0.206 /s** — under the 0.35 /s ceiling
+as the plan assumed. Replacing an estimate with a real figure later is an edit to this file
+only (set `status` to `"source"` and fill in `source`).
