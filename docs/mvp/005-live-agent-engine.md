@@ -137,7 +137,7 @@ To be answered by checking, not by assuming:
 
 ## Outcome at close (2026-09-19)
 
-Built and verified headless; **the final visual sign-off by the project owner at the calibrated rates is still open** (see the last bullet). Each criterion below was checked for real, with the numbers from `docs/plans/005-live-agent-engine.plan.md`.
+Closed as **delivered**. Verified headless with real long runs and visually in `sumo-gui` by the project owner. Each criterion below was checked for real, with the numbers from `docs/plans/005-live-agent-engine.plan.md`.
 
 * **Empty city at 05:00, individuals appearing one at a time.** Met. `simulator.engine` starts SUMO with no traffic at `--begin 18000`; spawns are driven by `RandomIndividualSource` (Poisson arrivals per mode). Confirmed in `sumo-gui`: it started stepping on its own and filled up.
 * **All three modes, only on suitable network parts, reaching their destinations.** Met. Edge pools per mode come from the network's own permissions (1,668 car / 3,739 bicycle / 4,115 pedestrian edges). Over a 6-hour run 2,111 of 2,159 cars, 1,453 of 1,487 bicycles and 1,462 of 1,573 pedestrians had arrived (the rest still under way at the end); no spawn was skipped.
@@ -146,7 +146,7 @@ Built and verified headless; **the final visual sign-off by the project owner at
 * **No built-in end; bounded run for tests/CI.** Met. The loop runs until interrupted or the GUI closes (clean exit, verified); `--max-seconds` bounds it. The clock wraps correctly past midnight (checked over 24 simulated hours).
 * **Static path removed.** Met. `traffic.py`, `simulate.py`, `randomTrips.py` usage, generated `.sumocfg`/route files and their tests are gone.
 * **Earlier criteria still hold.** Met: network unchanged (4,250 / 1,756), basemap and colours unaffected (colours now set through TraCI), 71 tests pass at 99.69 % coverage (floor 95 %), pre-commit passes.
-* **Owner watches it live and confirms.** Partly: the owner ran the engine in `sumo-gui` at the earlier, far higher density and found it "clearly denser than expected but working surprisingly well". Confirmation at the calibrated ~200 density is still pending; the rates are a one-line change in `DEFAULT_RATES` if it feels too sparse.
+* **Owner watches it live and confirms.** Met, with reservations recorded. The owner watched it at the calibrated ~200 density and accepted it for now: "a very calm and sensible city, as if it were 6 in the morning". Feedback carried forward: (1) it feels too quiet — the real number of cars per hour is exactly what MVP-007 (statistics) should settle, and the rates are a one-line change in `DEFAULT_RATES` until then; (2) bicycles look far more numerous than cars although cars should dominate — the spawn counts are close (~50 cars / ~45 bicycles concurrently) but bicycles stay in the network longer, and pedestrians dominate the count; the mode mix belongs to MVP-007's mode shares; (3) cars still get stuck behind cyclists — a road/lane/routing detail, not an engine one, left for later.
 
 **Real bugs found by running it, fixed with regression tests:** SUMO rejecting a walking stage (`Invalid arrivalPos`) after the person was added, which left a standing person and made every retry fail with "already exists"; named routes never being freed (a leak in an endless run — avoided with empty-route + `setRoute`); `getArrivedNumber()` not covering persons (arrivals are counted from id sets); MVP-004's rates gridlocking an open-ended run.
 

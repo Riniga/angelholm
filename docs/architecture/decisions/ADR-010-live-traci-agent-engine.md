@@ -1,6 +1,6 @@
 # ADR-010: Drive the simulation live through TraCI instead of pre-generating routes
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-09-19
 
 ## Context

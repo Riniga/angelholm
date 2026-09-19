@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # The simulated clock starts at 05:00 on an empty city (seconds since midnight).
 START_TIME = 18000.0
 # Only a real, verified fact from the MVP-004 GUI review: 200 ms per simulated second is a
-# pace a human can watch. Ignored by headless `sumo`. Speed control proper is MVP-006.
+# pace a human can watch. Ignored by headless `sumo`. A friendlier speed control is a backlog item (docs/roadmap.md).
 DEFAULT_DELAY_MS = 200
 
 # SUMO's own default type ids (every untyped vehicle/person uses them), plus one we create

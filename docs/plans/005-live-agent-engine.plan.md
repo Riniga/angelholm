@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** Phases 1–6 done except the project owner's final sign-off in `sumo-gui` at the calibrated rates (Phase 6 step 1). ADR-010 and documentation written; see the MVP's "Outcome at close".
+**Status:** Complete — all 6 phases done, MVP closed 2026-09-19 as delivered after the owner reviewed it live in `sumo-gui` at the calibrated rates. See the MVP's "Outcome at close" for the numbers and the owner's feedback (calm city, bicycles vs. cars, cars behind cyclists) carried into MVP-007+.
 
 ## 1. Goal
 

@@ -158,9 +158,9 @@ without touching the loop. Spawn rates are calibrated for about 200 concurrent t
 (measured flat over 6 and 24 simulated hours).
 
 Covered so far: car, bicycle and pedestrian movement, routing, traffic interactions, a
-continuously running city. Not yet covered: speed control (MVP-006), statistics-driven
-rates and a daily rhythm (MVP-007), zones (MVP-008), realistic scale (MVP-009), individuals
-with identities and daily plans (MVP-010), traffic signals as a distinct concern, and
+continuously running city. Not yet covered: statistics-driven
+rates and a daily rhythm (MVP-006), zones (MVP-007), realistic scale (MVP-008), individuals
+with identities and daily plans (MVP-009), a friendlier speed control (backlog), traffic signals as a distinct concern, and
 pedestrian/road interaction details (crossings, teleports at a few junctions, occasional
 vehicle–person collisions seen in long runs).
 
@@ -212,7 +212,7 @@ Potential measurements include:
 **`sumo-gui` in active use.** `simulator.engine` launches it under TraCI control with
 `--start` (runs without pressing Play) and `--delay 200` so playback is watchable by a
 human (found necessary after real use — SUMO otherwise runs as fast as it can). Closing the
-window ends the run cleanly. Adjustable speed is MVP-006. No dedicated interactive
+window ends the run cleanly. Speed is set with the delay only (a friendlier control is a backlog item). No dedicated interactive
 map/experiment interface exists — SUMO's own visualization remains sufficient for now, as
 originally expected.
 
