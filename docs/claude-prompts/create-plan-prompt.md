@@ -2,7 +2,7 @@
 
 ## Prompt
 
-Create all implementation plans for MVP:  `docs/mvp/004-multimodal-city.md`
+Create all implementation plans for MVP:  `docs/mvp/005-live-agent-engine.md`
 
 Requirements:
 
@@ -18,7 +18,7 @@ Output format:
 4. Step-by-step TODO grouped into phases
 5. Risks / open questions
 
-Save the plan in the folder: `docs/plans/004-multimodal-city.plan.md`
+Save the plan in the folder: `docs/plans/005-live-agent-engine.plan.md`
 
 ---
 
