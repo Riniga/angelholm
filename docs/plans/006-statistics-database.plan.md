@@ -319,6 +319,35 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
 
 ## Findings
 
+### Findings from Phase 6 (48 simulated hours, headless, seed 1, then 24 more with PID-level memory)
+
+* **Rhythm and profile:** spawned per hour matches the profile (cars: 03-04 about 41, 07-08 about
+  712-740, 17-18 about 704-747); day 1 and day 2 have the same shape within noise. Daily totals:
+  8,943 cars / 2,245 bicycles / 3,675 pedestrians a day against 9,000 / 2,250 / 3,750 expected.
+* **Mode split of spawns over 48 h:** 60.2 % / 15.1 % / 24.7 % (configured 60 / 15 / 25).
+* **Stability:** concurrent travellers about 10 at night, 250-300 at the 08:00 and 18:00 peaks, no
+  day-to-day growth (08:00: 256 then 280; 18:00: 234 then 235); peak 316 (48 h) and 277 (24 h).
+  Arrived tracks spawned; 0 skipped spawns. Python process 71.2 to 72.0 MB over 24 simulated
+  hours. 64 teleports and 50 vehicle-person collisions in 48 h (MVP-005 level).
+* **Mix on screen at the peaks:** roughly 90-130 cars, 30-38 bicycles, 95-128 pedestrians -
+  bicycles are now clearly the smallest group (MVP-005's complaint), pedestrians remain the
+  largest by count because they stay in the network longer.
+* **Curated entry/exit share of live car spawns:** 74.2 % (48 h), 74.5 % (24 h).
+* **No tuning needed:** the plan's starting values (15,000 trips/day, the 24 weights, 60/15/25)
+  were kept; peak car rate 0.21 per second is well under the ~0.35 ceiling. Recorded in the
+  data file's `_comment`.
+
+### Findings from Phase 7
+
+* Review against the standards found and fixed: two silent `except ... pass` blocks (now log at
+  debug level, per the coding standard), missing docstrings on public methods
+  (`RandomIndividualSource.due/draw`, `ConstantDemand`, `DemandProfile.max_rate`), and an
+  unnecessary `_peak_weight` field on `DemandProfile` (now computed in `max_rate`, which is
+  called once per mode at start-up).
+* `ADR-011` written and indexed; architecture overview, current-state and README updated;
+  roadmap status updated.
+* Open: the owner's live confirmation (rhythm, mix, clock size and placement).
+
 ### Findings from Phase 5
 
 Checked for real in `sumo-gui` (screenshots of the actual window), in the plan's order:

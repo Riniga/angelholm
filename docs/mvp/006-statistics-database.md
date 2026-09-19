@@ -167,3 +167,26 @@ To be answered by checking, not by assuming:
   dependency.
 * How are day boundaries handled — the run starts at 05:00 and never ends, so the profile has
   to wrap at midnight cleanly.
+
+## Outcome at close (2026-09-19)
+
+Built and verified headless with real long runs, and the clock label verified visually by the implementer in `sumo-gui`. **The project owner's live confirmation of the daily rhythm, the mix and the clock is still open** (last bullet). Every number below is from `docs/plans/006-statistics-database.plan.md`.
+
+* **Statistics file, labelled, invalid files rejected.** Met. `apps/simulator/data/demand-statistics.json` holds trips per day, a 24-hour departure profile and mode shares; each block has `status` and `source`/`note`, and all three are honestly `"estimate"`. `simulator.demand` rejects a missing file, bad JSON, a missing block or status, a non-positive total, a profile without exactly 24 hours and negative or all-zero values, each with a message naming the block (tested, and shown for real with a 23-hour profile: exit code 1, one readable line).
+* **Spawns follow the profile.** Met. Over 48 simulated hours the busiest hour spawned about 710-740 cars (hour 07-08) against ~35-45 in the quietest (03-04), and hourly counts matched the profile within noise. Statistical tests over four simulated days at a fixed seed check the same within stated tolerances.
+* **Mode split matches the shares; cars largest.** Met: 17,887 cars / 4,491 bicycles / 7,350 pedestrians over 48 simulated hours = 60.2 % / 15.1 % / 24.7 % against the configured 60 / 15 / 25.
+* **Changing the file changes behaviour with no code change.** Demonstrated for real: same seed, 2 hours, shares 60/15/25 gave 660 cars / 151 bicycles / 246 pedestrians; a scratch copy at 90/5/5 gave 980 / 49 / 48; the start-up log printed the new shares.
+* **The rhythm repeats.** Met: day 1 and day 2 of the 48-hour run have the same hourly shape (e.g. 07-08 cars 726 vs 698, 17-18 cars 724 vs 747).
+* **Stable.** Met. Concurrent travellers follow the rhythm - about 10 at night, 250-300 at the peaks (peak 316 in 48 h, 277 in a second 24 h run) - and do not grow from day to day; arrived tracks spawned; no spawn was skipped. The Python process went from 71.2 to 72.0 MB across 24 simulated hours (measured by PID). Teleports (64 in 48 h) and vehicle-person collisions (50 in 48 h) stayed at the levels seen in MVP-005.
+* **Curated entry/exit majority holds.** Met: 74.2 % (13,280 of 17,887) over 48 h and 74.5 % over 24 h, against 74.5 % in MVP-005.
+* **Time of day readable in `sumo-gui`.** Met by a workaround, checked by the implementer in a real window: `sumo-gui`'s toolbar clock shows only minutes and seconds (the hour is clipped), there is no view setting or TraCI title setter for a time display, so the engine keeps a red text label (a POI) with `HH:MM` at the top-left of the view (`ADR-011`); GUI runs only. Whether size and placement suit the owner is theirs to judge (`CLOCK_TEXT_SIZE` in `context_features.py`).
+* **Earlier criteria still hold.** Met: network unchanged (4,250 edges / 1,756 junctions, re-checked), basemap and colours unaffected, 138 tests pass at 99 % coverage (floor 95 %), `pre-commit` passes.
+* **Owner watches it live and confirms.** *Open.* The city now has a daily rhythm and cars are the largest group (on screen at the peak roughly 90-130 cars, 30-38 bicycles, 95-128 pedestrians - pedestrians still form a large share of what is visible, because they stay longer). If it feels too quiet or the mix is off, the fix is editing the statistics file, not code.
+
+**Findings along the way:** none of the estimated values had to change after calibration; the design questions the MVP raised were settled by measuring (trips vs travellers on screen, the toolbar clock, hourly step changes not visible so far). The tests also pin properties of the committed file itself (24 hours, honest labels, a real rhythm, cars largest, peak car rate under 0.30 per second), so a later edit that breaks them fails the suite.
+
+**Not solved here (recorded in the roadmap backlog):** cars stuck behind cyclists, pedestrians on roads, recurring teleports and collisions at a few junctions, and a friendlier speed control. Real published statistics (Trafikverket, RVU Sverige) could not be read in this session and are the natural replacement for the estimates.
+
+**Decision record:** `ADR-011` (committed labelled statistics file, thinning, trips vs travellers, clock label).
+
+**Final test/coverage state:** 138 tests, 99 % coverage (floor 95 %).

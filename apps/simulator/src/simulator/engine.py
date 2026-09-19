@@ -172,8 +172,9 @@ class LiveEngine:
             if text != self._clock_text:
                 traci.poi.setType(CLOCK_POI_ID, text)
                 self._clock_text = text
-        except TraCIException:
-            pass  # cosmetic only; try again next step
+        except TraCIException as error:
+            # Cosmetic only: never stop the run for it, try again next step.
+            logger.debug("Could not update the clock label: %s", error)
 
     def _route_for(self, individual: Individual) -> list[str] | None:
         """The edges from origin to destination for the individual's mode, or None."""
@@ -313,8 +314,9 @@ class LiveEngine:
         finally:
             try:
                 traci.close()
-            except (FatalTraCIError, TraCIException):
-                pass  # connection already gone (e.g. the GUI window was closed)
+            except (FatalTraCIError, TraCIException) as error:
+                # The connection is already gone (e.g. the GUI window was closed).
+                logger.debug("traci.close() failed: %s", error)
         return self.stats
 
 

@@ -10,7 +10,7 @@ the `Demand` protocol.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
@@ -50,9 +50,11 @@ class ConstantDemand:
         self._rates = rates
 
     def rate(self, mode: Mode, sim_time: float) -> float:
+        """The fixed rate for `mode`, whatever the time."""
         return self._rates.get(mode, 0.0)
 
     def max_rate(self, mode: Mode) -> float:
+        """The same fixed rate: it never varies."""
         return self._rates.get(mode, 0.0)
 
 
@@ -70,10 +72,6 @@ class DemandProfile:
     total_status: str = "estimate"
     hourly_status: str = "estimate"
     shares_status: str = "estimate"
-    _peak_weight: float = field(init=False, repr=False, compare=False, default=0.0)
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "_peak_weight", max(self.hourly_weights))
 
     def _per_second(self, mode: Mode, weight: float) -> float:
         return (
@@ -89,7 +87,8 @@ class DemandProfile:
         return self._per_second(mode, self.hourly_weights[hour])
 
     def max_rate(self, mode: Mode) -> float:
-        return self._per_second(mode, self._peak_weight)
+        """The rate in the busiest hour: the ceiling used for thinning."""
+        return self._per_second(mode, max(self.hourly_weights))
 
 
 def _number(value: object, where: str) -> float:

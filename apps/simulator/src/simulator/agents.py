@@ -147,6 +147,7 @@ class RandomIndividualSource:
         }
 
     def due(self, sim_time: float) -> list[Mode]:
+        """Modes that spawn now, one entry per individual (advances the arrival streams)."""
         due_modes: list[Mode] = []
         for mode, max_rate in self._max_rates.items():
             while self._next_candidate[mode] <= sim_time:
@@ -159,6 +160,7 @@ class RandomIndividualSource:
         return due_modes
 
     def draw(self, mode: Mode) -> Individual:
+        """A weighted random origin/destination pair for `mode` (never equal)."""
         pool = self._mode_edges[mode]
         origin = self._rng.choices(pool.edges, weights=pool.weights)[0]
         destination = origin

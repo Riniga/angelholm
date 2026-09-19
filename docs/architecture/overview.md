@@ -17,16 +17,16 @@ This workspace contains an urban mobility simulation project for modelling how p
 
 The project is intended to provide an experimental environment where infrastructure and traffic conditions can be changed and the resulting effects on mobility can be simulated, measured and compared. See [`docs/vision.md`](../vision.md) for the full purpose and principles, and [`docs/roadmap.md`](../roadmap.md) for the planned delivery stages (R0–R5).
 
-**Six MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002,
-MVP-003, MVP-004 and MVP-005) is a real, working application — fetches OpenStreetMap data, builds a
+**Seven MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002,
+MVP-003, MVP-004, MVP-005 and MVP-006) is a real, working application — fetches OpenStreetMap data, builds a
 routable SUMO network clipped to a hand-drawn coverage outline, spawns car, bicycle
 and pedestrian individuals live through TraCI into an empty city that starts at 05:00
 (cars biased toward curated entry/exit roads), shows a real basemap image as visual
 context, and runs headless or via `sumo-gui`, all through the `simulator` console command. MVP-000 (workspace foundation: ADRs,
 methodology-compliance baseline, repo settings) closed first and MVP-001 built on top of
 it, with MVP-002 growing the covered area, MVP-003 adding visual context, and MVP-004
-adding multimodal traffic and MVP-005 replacing pre-generated traffic with a live agent
-engine. The repository was initialised
+adding multimodal traffic, MVP-005 replacing pre-generated traffic with a live agent
+engine and MVP-006 giving it a daily rhythm from a statistics file. The repository was initialised
 from a generic, organisation-wide reference skeleton (referred to in the repository as a
 "grundplåt"); its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) were fully carried out and
 the file deleted, per its own instruction, before either MVP began. No `packages/` exists
@@ -73,14 +73,15 @@ Areas Not Yet Implemented" below.
 │   ├── convert_context_background.py   One-off (MVP-003): map_plain.gif -> committed PNG
 │   └── list_entry_exit_candidates.py   One-off (MVP-004): list candidate entry/exit edges
 ├── apps/
-│   └── simulator/                 First real application (MVP-001..005) — see "Major
+│   └── simulator/                 First real application (MVP-001..006) — see "Major
 │       ├── pyproject.toml         Components" below for what it does
-│       ├── src/simulator/         network.py, agents.py, engine.py,
-│       │                          context_features.py, run.py (the `simulator`
+│       ├── src/simulator/         network.py, agents.py, demand.py,
+│       │                          engine.py, context_features.py, run.py (the `simulator`
 │       │                          console command), _paths.py (shared helper)
-│       ├── tests/                 71 tests, mocked/deterministic, 99% coverage
+│       ├── tests/                 138 tests, mocked/deterministic, 99% coverage
 │       └── data/                  angelholm_bbox.osm.xml, network.net.xml,
 │                                   coverage-outline.geojson, entry-exit-edges.json,
+│                                   demand-statistics.json,
 │                                   context-background.png — committed inputs;
 │                                   GUI settings regenerated
 └── docs/
@@ -139,7 +140,7 @@ pedestrian/bicycle infrastructure, speed-limit overrides beyond OSM defaults, bu
 
 ### Mobility Simulation
 
-**Implemented, MVP-001 + MVP-002 + MVP-004 + MVP-005.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`,
+**Implemented, MVP-001 + MVP-002 + MVP-004 + MVP-005 + MVP-006.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`,
 exactly pinned — `ADR-006`) is the simulation engine, not just a candidate anymore.
 `simulator.network.build_network()` converts the OSM extract into a routable network via
 `netconvert`, clipped to the coverage outline via `--keep-edges.in-geo-boundary`
@@ -154,15 +155,26 @@ curated entry/exit roads in `apps/simulator/data/entry-exit-edges.json`), a rout
 TraCI's `findRoute` (retrying when a random pair has none), and is removed by SUMO on
 arrival. The run has no end; `--max-seconds` bounds it for automation. The source is a
 replaceable seam (`IndividualSource`): later R2 MVPs change who spawns, when and where
-without touching the loop. Spawn rates are calibrated for about 200 concurrent travellers
-(measured flat over 6 and 24 simulated hours).
+without touching the loop.
+
+Since MVP-006 *how much* spawns, and when, comes from data (`ADR-011`): the committed
+`apps/simulator/data/demand-statistics.json` holds trips per day, a 24-hour departure profile
+and mode shares, every block labelled `"source"` or `"estimate"` (all are estimates today).
+`simulator.demand` validates it and turns it into an arrival rate per mode for the simulated
+time of day (wrapping at midnight); `RandomIndividualSource` generates arrivals from it by
+thinning. The result is a quiet night, a morning and an afternoon rush and cars as the largest
+group of spawns. `simulator --stats PATH` uses another file; the start-up log says what is in
+use, and one log line per simulated hour reports the spawns. Measured over 48 simulated hours:
+spawns match the profile, the day repeats, concurrent travellers follow the rhythm (about 10 at
+night, 250–300 at the peaks) without growing. In `sumo-gui` the time of day is shown as a red
+label in the view corner (its toolbar clock clips the hour).
 
 Covered so far: car, bicycle and pedestrian movement, routing, traffic interactions, a
-continuously running city. Not yet covered: statistics-driven
-rates and a daily rhythm (MVP-006), zones (MVP-007), realistic scale (MVP-008), individuals
-with identities and daily plans (MVP-009), a friendlier speed control (backlog), traffic signals as a distinct concern, and
-pedestrian/road interaction details (crossings, teleports at a few junctions, occasional
-vehicle–person collisions seen in long runs).
+continuously running city with a daily rhythm. Not yet covered: zones (MVP-007), realistic
+scale (MVP-008), individuals with identities and daily plans (MVP-009), a friendlier speed
+control (backlog), traffic signals as a distinct concern, and pedestrian/road interaction
+details (crossings, teleports at a few junctions, occasional vehicle–person collisions seen in
+long runs).
 
 ### Population and Travel Demand
 
@@ -212,7 +224,9 @@ Potential measurements include:
 **`sumo-gui` in active use.** `simulator.engine` launches it under TraCI control with
 `--start` (runs without pressing Play) and `--delay 200` so playback is watchable by a
 human (found necessary after real use — SUMO otherwise runs as fast as it can). Closing the
-window ends the run cleanly. Speed is set with the delay only (a friendlier control is a backlog item). No dedicated interactive
+window ends the run cleanly. The simulated time of day is drawn as a label in the view corner
+(`sumo-gui`'s own toolbar clock clips the hour). Speed is set with the delay only (a friendlier
+control is a backlog item). No dedicated interactive
 map/experiment interface exists — SUMO's own visualization remains sufficient for now, as
 originally expected.
 
@@ -222,7 +236,7 @@ originally expected.
 
 ### Runtime
 
-`apps/simulator` (MVP-001, extended by MVP-002 to MVP-005) depends on:
+`apps/simulator` (MVP-001, extended by MVP-002 to MVP-006) depends on:
 
 * **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly pinned to `1.27.1`) — the mobility
   simulation engine. `ADR-006` records the choice, including a real gotcha: conda-forge's
@@ -295,11 +309,11 @@ present in the shared `requirements-lock.txt`. The licence-allowlist decision (S
 ### Running Tests
 
 ```bash
-pytest -q                                    # 71 tests, ~0.5s
+pytest -q                                    # 138 tests, ~4s
 pytest -q --cov --cov-report=term-missing    # 99% coverage on apps/simulator
 ```
 
-All 71 tests are mocked/deterministic (no live network, no live SUMO invocation), per
+All 138 tests are mocked/deterministic (no live network, no live SUMO invocation), per
 `docs/standards/testing.md`'s "must be deterministic and runnable offline". The coverage
 floor (`fail_under = 95` in `pyproject.toml`) is a real, measured baseline — set once
 `apps/simulator` was functionally complete, not mid-build (`ADR-004`, `GAP-D1-COVERAGE`
@@ -417,7 +431,7 @@ The difference between the results is then measurable.
 Domain concepts such as people, journeys, scenarios and experiment results should not unnecessarily depend on SUMO-specific representations.
 
 SUMO is now the chosen engine (`ADR-006`), not just a candidate — `apps/simulator`'s own
-domain model (`network.py`, `agents.py`, `engine.py`) wraps it via `subprocess`/file I/O and
+domain model (`network.py`, `agents.py`, `demand.py`, `engine.py`) wraps it via `subprocess`/file I/O and
 TraCI (`engine.py` is the only module that talks to a running SUMO; `agents.py` has no
 SUMO runtime dependency beyond reading the network) rather than importing SUMO-specific types directly into a shared domain layer, keeping the
 separation this principle asks for.
