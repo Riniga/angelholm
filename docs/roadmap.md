@@ -8,7 +8,7 @@ Each roadmap area is implemented through one or more MVPs. Once an MVP has been 
 
 ## Current Status
 
-MVP-000 through MVP-004 are delivered: a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a synthetic population (R2) and then infrastructure what-if experiments (R3).
+MVP-000 through MVP-005 are delivered (MVP-005 being the first step of R2: a live, TraCI-driven city that starts empty at 05:00 and keeps spawning travellers): a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a live, statistics-driven agent engine (R2) and then infrastructure what-if experiments (R3).
 
 ---
 
@@ -43,12 +43,19 @@ Establish the basic simulation environment and prove that a real city can be rep
 
 ---
 
-## R2 – People and Daily Mobility (Planned)
+## R2 – People and Daily Mobility (In progress)
 
 Move from generated traffic to a population whose individual travel needs create the traffic.
 
-* **MVP-005 – Synthetic Population** — Introduce people with origins, destinations, departure times and available transport modes.
-* **MVP-006 – Daily Travel Patterns** — Allow people to perform multiple trips representing simplified daily activities such as home, work, school and leisure.
+The simulation becomes **live**: Ängelholm starts empty at about 05:00, and a single TraCI-driven control loop keeps adding people (in a vehicle, on a bicycle or on foot) one at a time, each with a destination, and removes them once they arrive. It can run indefinitely; time cannot be rewound or skipped. Only the *patterns* need to be reproducible, not the exact individuals (an optional seed remains for debugging). The agent engine starts deliberately simple (random) and becomes more realistic with each MVP.
+
+* **MVP-005 – Live Agent Engine** — Replace the static pre-generated routes with a TraCI loop that starts from an empty city at 05:00, spawns individuals with a mode, origin and destination, removes arrived ones, and runs forever. Random origins/destinations (still biased toward the curated entry/exit edges) at a fixed spawn rate giving roughly today's ~200 concurrent travellers. Replaces the MVP-004 traffic generation.
+* **MVP-006 – Statistics Database** — Replace hard-coded randomness with a data-driven statistics layer (departures per hour of day, mode shares, trip-purpose mix) that can be changed without touching code, so spawn rates follow a daily rhythm (quiet nights, rush hours) and the mix of cars, bicycles and pedestrians is set from data instead of tuned by eye. Directly addresses MVP-005 feedback: the city feels too quiet and bicycles seem to outnumber cars. Includes making the simulated time of day easy to read while watching.
+* **MVP-007 – Zones and Destination Attractiveness** — Identify zones (housing, work, retail, school, centre) from map data and weight origins and destinations by zone, so busy places are busy for a reason instead of by chance (no more "the small street is the busiest").
+* **MVP-008 – Realistic Population Scale** — Scale the number of travellers to realistic levels, distinguishing the built-up core from the wider municipality (~40,000 inhabitants; traffic from outside enters via the entry/exit roads).
+* **MVP-009 – Daily Travel Patterns** — Give individuals persistent identity and simplified daily plans (home → work/school → leisure → home) instead of independent one-off trips. Exact scope to be decided when this MVP is defined, after MVP-005–008 show what the engine needs.
+
+*Speed control (0.5x–8x) was dropped as its own MVP: `sumo-gui`'s own delay setting is good enough for now (see the backlog for a friendlier version). MVP numbers after MVP-005 were renumbered accordingly on 2026-09-19; documents written before then (MVP-005, its plan, ADR-010) still use the old numbers.*
 
 ---
 
@@ -56,8 +63,8 @@ Move from generated traffic to a population whose individual travel needs create
 
 Enable controlled experiments with the city's infrastructure.
 
-* **MVP-007 – Road Closure Experiment** — Close or restrict a road and allow affected traffic to adapt.
-* **MVP-008 – Scenario Comparison** — Run identical populations against different infrastructure scenarios and compare the results.
+* **MVP-010 – Road Closure Experiment** — Close or restrict a road and allow affected traffic to adapt.
+* **MVP-011 – Scenario Comparison** — Run identical populations against different infrastructure scenarios and compare the results.
 
 ---
 
@@ -98,6 +105,8 @@ MVPs are defined when this roadmap area becomes active.
 
 ## Backlog of ideas to be implemented / fixed
 
+* Friendlier speed control: a speed factor (0.5x–8x) instead of raw delay milliseconds, and a clearly visible simulated clock (from MVP-005 review: it is not intuitive whether 100 ms is faster than 300 ms).
+* Cars getting stuck behind cyclists, pedestrians walking in the middle of roads, and recurring teleports/collisions at a few junctions (seen in MVP-005 long runs) — routing, lanes, crossings and signal programs.
 * Import buildings, water, parks and other geographic features for visualization.
 * Model households and vehicle ownership.
 * Schools, workplaces, shops and leisure destinations.

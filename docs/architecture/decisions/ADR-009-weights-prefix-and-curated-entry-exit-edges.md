@@ -1,6 +1,6 @@
 # ADR-009: Bias car trips toward a curated entry/exit edge list via `--weights-prefix`
 
-**Status:** Proposed
+**Status:** Partly superseded by [ADR-010](ADR-010-live-traci-agent-engine.md) — the curated entry/exit list and its bias still stand; the `--weights-prefix` mechanism and the `<vType>` text substitution were replaced when MVP-005 moved to a live TraCI engine
 **Date:** 2026-09-19
 
 ## Context
