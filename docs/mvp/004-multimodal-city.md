@@ -117,3 +117,68 @@ The following are deliberately excluded from this MVP:
 * MVP-001/002/003's existing acceptance criteria still hold: the network is unchanged
   (same edge/junction counts), the map-context background is unaffected, and the full
   `apps/simulator` test suite still passes — confirmed by actually re-running them.
+
+## Outcome at close (2026-09-18)
+
+Closed as **delivered** — all acceptance criteria met, each verified for real, not
+asserted, with real findings along the way that changed the final shape of the work.
+
+* **Bicycles and pedestrians move through the network, using the appropriate parts.**
+  Met. `generate_bicycle_traffic()` (`randomTrips.py --vehicle-class bicycle`) and
+  `generate_pedestrian_traffic()` (`--persontrips`) reuse the network's own existing
+  permissions — no rebuild needed, confirmed early (3,739/4,250 edges already allow
+  bicycles, 4,115 allow pedestrians).
+* **Volume floors met, then substantially revised upward twice more after real visual
+  review.** The MVP's own floors (≥80 cars/≥60 bicycles/≥80 pedestrians) were met on the
+  first real run (80/61/80). The project owner then reviewed it live in `sumo-gui` twice
+  more and asked for real changes each time, not just confirmation: first "way too few"
+  (→ ~3-4x: final counts 282 cars/211 bicycles/282 pedestrians), then "bikes too similar
+  in speed to cars" and "extend the runtime" (→ explicit bicycle `maxSpeed` cap, 200s →
+  400s window with periods re-derived to hold the same counts, not also multiply them).
+  Final numbers are recorded as the new `DEFAULT_*_PERIOD`/`DEFAULT_END` constants, not
+  hard facts in this document, since they're tuning choices, not fixed requirements.
+* **Curated entry/exit list: 8, not ~10.** `scripts/list_entry_exit_candidates.py` found
+  ~100 geometric candidates, but only 8 were genuinely distinct, real, named arterial
+  roads (Kungsgårdsleden ×2 crossings, Höja landsväg, Kristian II:s väg, Havsbadsvägen,
+  Klippanvägen, Hammarvägen, Transportgatan) — Helsingborgsvägen and Kullavägen, both
+  real roads visible on the basemap, don't clip at a dead-end in this network at all.
+  Verified visually before committing: rendered all 8 as markers on the real basemap
+  image, confirmed each lands on its correctly-named road.
+* **Majority of car trips start or end at a curated edge.** Met, comfortably: 73.8%
+  (208/282) in the final, tuned run — consistent with the original 71.2% (57/80) measured
+  before the density bump, confirming the `--weights-prefix` bias (boost weight 200,
+  verified via `randomTrips.py`'s own source, `LoadedProps`) holds at scale.
+* **Simulation completes headless, all three modes together.** Met, but not on the first
+  try: combining independently-generated car and bicycle route files hit a real bug —
+  both are `<vehicle>` elements with independently-restarting ids, so id `"0"` collided
+  and `sumo` refused to start. Fixed with `randomTrips.py --prefix` (`bike_`/`ped_`,
+  the latter added defensively).
+* **Project owner visually confirms cyclists/pedestrians are visible and distinct.** Met,
+  after two further real findings from that same visual review, not assumed from "trips
+  were generated": (1) cars and bicycles both rendered identically yellow — no mode had
+  an explicit `<vType color=...>`, so both fell back to the same SUMO default; fixed by
+  giving each mode an explicit colour (`simulator.traffic._customize_vtype()`, inserting
+  a `<vType>` referencing SUMO's own internal default type id — `DEFAULT_VEHTYPE`/
+  `DEFAULT_PEDTYPE` — where `randomTrips.py` left one out entirely, confirmed for real via
+  `sumo` that this correctly overrides the implicit default). (2) pedestrians were still
+  hard to spot even with a distinct colour — fixed via `sumo-gui`'s real
+  `person_exaggeration` view-setting (confirmed from SUMO's own bundled
+  `tools/game/hiking/view.xml` example, not guessed), rendering them 5x larger.
+* **MVP-001/002/003's existing criteria still hold.** Met — network unchanged
+  (4,250/1,756), map-context background unaffected, full test suite re-run after every
+  change in this MVP, not just once at the end.
+
+**Real bugs/gaps found and fixed along the way, not anticipated when this MVP/plan were
+written:** the `<vehicle>` id collision between modes; both new modes rendering
+identically to cars with no explicit colour; pedestrians still hard to spot even once
+coloured; bicycles' implicit SUMO speed cap (~19-22 km/h) reading as "too similar to
+cars" despite already averaging roughly half of cars' own ~34 km/h; and a real,
+pre-existing documentation gap found while updating `overview.md` for this MVP —
+`defusedxml` (added for a Semgrep SAST fix during MVP-003's own PR) had never been
+recorded in "Existing Dependencies" at all.
+
+**Decision record:** `ADR-009` (`--weights-prefix` + curated entry/exit list, over
+`--fringe-factor`; plain-text `<vType>` post-processing to avoid re-triggering the Semgrep
+`use-defused-xml` rule).
+
+**Final test/coverage state:** 50 tests, 99.57% coverage (floor 95%).

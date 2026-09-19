@@ -23,6 +23,8 @@ class TestMain:
                 return_value=tmp_path / "angelholm-guisettings.xml",
             ) as mock_gui_settings,
             patch("simulator.run.generate_traffic") as mock_traffic,
+            patch("simulator.run.generate_bicycle_traffic") as mock_bikes,
+            patch("simulator.run.generate_pedestrian_traffic") as mock_peds,
             patch("simulator.run.write_sumocfg") as mock_cfg,
             patch("simulator.run.run_gui") as mock_gui,
             patch("simulator.run.run_headless") as mock_headless,
@@ -36,11 +38,23 @@ class TestMain:
             tmp_path / "network.net.xml",
             tmp_path / "angelholm-guisettings.xml",
         )
-        mock_traffic.assert_called_once()
+        mock_traffic.assert_called_once_with(
+            tmp_path / "network.net.xml", tmp_path / "angelholm.rou.xml"
+        )
+        mock_bikes.assert_called_once_with(
+            tmp_path / "network.net.xml", tmp_path / "angelholm.bikes.rou.xml"
+        )
+        mock_peds.assert_called_once_with(
+            tmp_path / "network.net.xml", tmp_path / "angelholm.peds.rou.xml"
+        )
         mock_cfg.assert_called_once_with(
             tmp_path / "network.net.xml",
             tmp_path / "angelholm.rou.xml",
             tmp_path / "angelholm.sumocfg",
+            additional_route_files=[
+                tmp_path / "angelholm.bikes.rou.xml",
+                tmp_path / "angelholm.peds.rou.xml",
+            ],
         )
         mock_gui.assert_called_once_with(
             tmp_path / "angelholm.sumocfg",
@@ -68,6 +82,8 @@ class TestMain:
                 return_value=tmp_path / "angelholm-guisettings.xml",
             ),
             patch("simulator.run.generate_traffic"),
+            patch("simulator.run.generate_bicycle_traffic"),
+            patch("simulator.run.generate_pedestrian_traffic"),
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui"),
         ):
@@ -99,6 +115,8 @@ class TestMain:
                 return_value=tmp_path / "angelholm-guisettings.xml",
             ),
             patch("simulator.run.generate_traffic"),
+            patch("simulator.run.generate_bicycle_traffic"),
+            patch("simulator.run.generate_pedestrian_traffic"),
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui"),
         ):
@@ -118,6 +136,8 @@ class TestMain:
             patch("simulator.run.build_network"),
             patch("simulator.run.write_gui_settings") as mock_gui_settings,
             patch("simulator.run.generate_traffic"),
+            patch("simulator.run.generate_bicycle_traffic") as mock_bikes,
+            patch("simulator.run.generate_pedestrian_traffic") as mock_peds,
             patch("simulator.run.write_sumocfg"),
             patch("simulator.run.run_gui") as mock_gui,
             patch("simulator.run.run_headless") as mock_headless,
@@ -129,3 +149,7 @@ class TestMain:
         mock_gui.assert_not_called()
         # Map context is a sumo-gui-only background — skipped entirely for --headless.
         mock_gui_settings.assert_not_called()
+        # Bicycle/pedestrian traffic still generates for --headless (unlike the GUI
+        # background) — only the map-context pipeline is GUI-only, not multimodal traffic.
+        mock_bikes.assert_called_once()
+        mock_peds.assert_called_once()

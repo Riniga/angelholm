@@ -8,11 +8,11 @@ Each roadmap area is implemented through one or more MVPs. Once an MVP has been 
 
 ## Current Status
 
-The project is in its initial exploration and foundation phase. The current focus is to establish a working simulation based on a real city map, generate traffic, visualize movement and verify that the simulation can be manipulated and measured.
+MVP-000 through MVP-004 are delivered: a working, visual simulation of central Ängelholm exists with car, bicycle and pedestrian traffic on a real, outline-clipped road network. The next focus is a synthetic population (R2) and then infrastructure what-if experiments (R3).
 
 ---
 
-## R0 – Foundation (Planned)
+## R0 – Foundation (Delivered)
 
 Close the gap between the generic project skeleton this workspace was bootstrapped from and
 a working, internally consistent, policy-compliant starting point, before any application
@@ -25,7 +25,7 @@ roadmap's own MVP numbering.
 
 ---
 
-## R1 – Living City (Planned)
+## R1 – Living City (Delivered)
 
 Establish the basic simulation environment and prove that a real city can be represented and simulated.
 
@@ -35,10 +35,10 @@ Establish the basic simulation environment and prove that a real city can be rep
   (`docs/architecture/mapoutline.png`: NW 56.255099, 12.849519 — SE 56.225986, 12.894902),
   clipped to the drawn outline rather than the raw bounding box so surrounding areas
   outside it are excluded. Network/routing/traffic logic only — no new map features.
-* **MVP-003 – Map Context Features** — Import water, land use/land cover and other
-  non-routing geographic features for the extended area, so the visualisation reads as
-  recognisably Ängelholm. Visual context only — does not change routing or traffic
-  behaviour.
+* **MVP-003 – Map Context Features** — Show a real, georeferenced basemap image behind the
+  network in `sumo-gui` so the visualisation reads as recognisably Ängelholm (an
+  OSM-shape-based approach was tried and rejected — see ADR-008). Visual context only —
+  does not change routing or traffic behaviour.
 * **MVP-004 – Multimodal City** — Introduce cars, cyclists and pedestrians using the appropriate parts of the network, generated independently per mode (still synthetic, not population-based) and biased toward a curated set of real city entry/exit edges rather than spread uniformly across the whole network.
 
 ---

@@ -1,0 +1,45 @@
+{
+  "_comment": "MVP-004 curated entry/exit edges. Hand-picked from scripts/list_entry_exit_candidates.py's output (docs/plans/004-multimodal-city.plan.md Phase 1) — real, named, distinct arterial roads only; the many other geometric candidates were minor residential dead-ends where the MVP-002 coverage outline happened to clip through a small street, not real city gateways. Fewer than the originally-hoped ~10: Helsingborgsvägen and Kullavägen (both real roads visible in docs/architecture/map_plain.gif) don't appear as candidates at all, meaning the outline doesn't clip through them at a dead-end in this network.",
+  "entries": [
+    {
+      "edge_id": "1022255543",
+      "name": "Kungsgårdsleden (södra/Höja interchange)",
+      "speed_kmh": 80
+    },
+    {
+      "edge_id": "126914871",
+      "name": "Kungsgårdsleden (norra/Rebbelberga interchange)",
+      "speed_kmh": 60
+    },
+    {
+      "edge_id": "129708776#1",
+      "name": "Höja landsväg",
+      "speed_kmh": 60
+    },
+    {
+      "edge_id": "22968578",
+      "name": "Kristian II:s väg",
+      "speed_kmh": 50
+    },
+    {
+      "edge_id": "222670509",
+      "name": "Havsbadsvägen",
+      "speed_kmh": 40
+    },
+    {
+      "edge_id": "290146206#0",
+      "name": "Klippanvägen",
+      "speed_kmh": 40
+    },
+    {
+      "edge_id": "34480009#0",
+      "name": "Hammarvägen",
+      "speed_kmh": 40
+    },
+    {
+      "edge_id": "44070291#0",
+      "name": "Transportgatan",
+      "speed_kmh": 40
+    }
+  ]
+}

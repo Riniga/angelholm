@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- generated on 2026-09-18 13:38:14.280831 by Eclipse SUMO osmGet.py v1.27.1
+<!-- generated on 2026-09-18 17:43:55.900105 by Eclipse SUMO osmGet.py v1.27.1
 <configuration>
     <prefix value="angelholm"/>
     <bbox value="12.849519,56.225986,12.894902,56.255099"/>
-    <output-dir value="apps\simulator\data"/>
+    <output-dir value="D:\github\riniga\angelholm\apps\simulator\data"/>
     <retry-delay value="10"/>
 </configuration>
 -->

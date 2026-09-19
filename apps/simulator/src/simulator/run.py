@@ -18,7 +18,12 @@ from pathlib import Path
 from simulator.context_features import write_gui_settings
 from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
 from simulator.simulate import run_gui, run_headless
-from simulator.traffic import generate_traffic, write_sumocfg
+from simulator.traffic import (
+    generate_bicycle_traffic,
+    generate_pedestrian_traffic,
+    generate_traffic,
+    write_sumocfg,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +57,18 @@ def main(argv: list[str] | None = None) -> int:
         build_network(osm_file, net_file, boundary_polygon=boundary_polygon)
 
     route_file = DATA_DIR / "angelholm.rou.xml"
+    bicycle_route_file = DATA_DIR / "angelholm.bikes.rou.xml"
+    pedestrian_route_file = DATA_DIR / "angelholm.peds.rou.xml"
     config_file = DATA_DIR / "angelholm.sumocfg"
     generate_traffic(net_file, route_file)
-    write_sumocfg(net_file, route_file, config_file)
+    generate_bicycle_traffic(net_file, bicycle_route_file)
+    generate_pedestrian_traffic(net_file, pedestrian_route_file)
+    write_sumocfg(
+        net_file,
+        route_file,
+        config_file,
+        additional_route_files=[bicycle_route_file, pedestrian_route_file],
+    )
 
     if args.headless:
         run_headless(config_file)
