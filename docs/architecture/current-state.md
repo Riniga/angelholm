@@ -8,7 +8,7 @@ in the same PR as any change to an app's status, test count, or key capabilities
 
 | App | Status | Tests | Key capabilities |
 |-----|--------|-------|-------------------|
-| `apps/simulator` | Implemented (MVP-001 + MVP-002, MVP-003 in progress) | 33 | Fetches a real OpenStreetMap extract, builds a routable SUMO network clipped to the outlined central-Ängelholm coverage area (`docs/architecture/mapoutline.png` — 4,250 edges, 1,756 junctions), generates synthetic traffic, shows a georeferenced basemap image behind the network in `sumo-gui`, runs headless or via `sumo-gui` — all through the `simulator` console command |
+| `apps/simulator` | Implemented (MVP-001 + MVP-002 + MVP-003, MVP-004 in progress) | 50 | Fetches a real OpenStreetMap extract, builds a routable SUMO network clipped to the outlined central-Ängelholm coverage area (`docs/architecture/mapoutline.png` — 4,250 edges, 1,756 junctions), generates synthetic car/bicycle/pedestrian traffic biased toward 8 curated entry/exit roads, shows a georeferenced basemap image behind the network in `sumo-gui`, runs headless or via `sumo-gui` — all through the `simulator` console command |
 
 ## Shared packages
 
@@ -24,9 +24,11 @@ project-specific deviates from them yet.
 ## Dependencies
 
 `apps/simulator` depends on `eclipse-sumo`/`traci`/`sumolib` (SUMO, exactly pinned —
-`ADR-006`), `shapely` (outline-polygon representation for network clipping — `ADR-007`)
-and `pyproj` (converts the background image's known corners into network coordinates —
-`ADR-008`). The development-tooling dependency surface (Conda `angelholm` environment,
+`ADR-006`), `shapely` (outline-polygon representation for network clipping — `ADR-007`),
+`pyproj` (converts the background image's known corners into network coordinates —
+`ADR-008`) and `defusedxml` (XXE-safe parsing of the committed network file — a real
+Semgrep SAST finding on plain `xml.etree.ElementTree`, fixed properly rather than
+suppressed). The development-tooling dependency surface (Conda `angelholm` environment,
 Ruff, pytest, `pytest-cov`, pre-commit, plus `numpy`/`opencv-python-headless`/`pillow` for
 the one-off `scripts/extract_coverage_outline.py` and
 `scripts/convert_context_background.py`) is scaffolded — see
@@ -34,8 +36,8 @@ the one-off `scripts/extract_coverage_outline.py` and
 
 ## Test counts
 
-`apps/simulator`: 33 tests, all mocked/deterministic (no live network, no live SUMO
-invocation). Coverage: 99.40% measured 2026-09-18 — floor set to 95% in `pyproject.toml`
+`apps/simulator`: 50 tests, all mocked/deterministic (no live network, no live SUMO
+invocation). Coverage: 99.57% measured 2026-09-18 — floor set to 95% in `pyproject.toml`
 (`ADR-004`, `GAP-D1-COVERAGE` closed).
 
 ## Methodology compliance

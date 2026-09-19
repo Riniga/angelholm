@@ -20,6 +20,7 @@ from simulator.traffic import (
     MIN_PEDESTRIANS,
     MIN_VEHICLES,
     TrafficGenerationError,
+    _customize_vtype,
     _write_edge_weights,
     generate_bicycle_traffic,
     generate_pedestrian_traffic,
@@ -112,6 +113,77 @@ class TestWriteEdgeWeights:
         content = src_path.read_text(encoding="utf-8")
         assert '<edge id="e1" value="1.0"/>' in content
         assert '<edge id="e2" value="1.0"/>' in content
+
+
+class TestCustomizeVtype:
+    def test_colours_an_existing_vtype_in_place(self, tmp_path: Path) -> None:
+        # Mirrors what randomTrips.py --vehicle-class actually generates for bicycles.
+        route_file = tmp_path / "bikes.rou.xml"
+        route_file.write_text(
+            "<routes>\n"
+            '    <vType id="bike__bicycle" vClass="bicycle"/>\n'
+            '    <vehicle id="bike_0" type="bike__bicycle" depart="0.00"/>\n'
+            "</routes>\n",
+            encoding="utf-8",
+        )
+
+        _customize_vtype(
+            route_file,
+            "0,1,0",
+            default_type_id="DEFAULT_VEHTYPE",
+            default_vclass="bicycle",
+        )
+
+        content = route_file.read_text(encoding="utf-8")
+        assert '<vType id="bike__bicycle" vClass="bicycle" color="0,1,0"/>' in content
+        # Only one vType — must not have also inserted a second, default one.
+        assert content.count("<vType") == 1
+
+    def test_sets_max_speed_on_an_existing_vtype(self, tmp_path: Path) -> None:
+        route_file = tmp_path / "bikes.rou.xml"
+        route_file.write_text(
+            '<routes>\n    <vType id="bike__bicycle" vClass="bicycle"/>\n</routes>\n',
+            encoding="utf-8",
+        )
+
+        _customize_vtype(
+            route_file,
+            "0,1,0",
+            default_type_id="DEFAULT_VEHTYPE",
+            default_vclass="bicycle",
+            max_speed=4.17,
+        )
+
+        content = route_file.read_text(encoding="utf-8")
+        assert (
+            '<vType id="bike__bicycle" vClass="bicycle" color="0,1,0" maxSpeed="4.17"/>'
+            in content
+        )
+
+    def test_inserts_a_vtype_when_none_exists(self, tmp_path: Path) -> None:
+        # Mirrors what randomTrips.py leaves fully implicit for cars/pedestrians.
+        route_file = tmp_path / "cars.rou.xml"
+        route_file.write_text(
+            '<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
+            '    <vehicle id="0" depart="0.00"/>\n'
+            "</routes>\n",
+            encoding="utf-8",
+        )
+
+        _customize_vtype(
+            route_file,
+            "1,1,0",
+            default_type_id="DEFAULT_VEHTYPE",
+            default_vclass="passenger",
+        )
+
+        content = route_file.read_text(encoding="utf-8")
+        assert (
+            '<vType id="DEFAULT_VEHTYPE" vClass="passenger" color="1,1,0"/>' in content
+        )
+        # The pre-existing, untyped <vehicle> is untouched — it picks up the new vType
+        # implicitly via SUMO's own default-type-id convention, not an explicit `type=`.
+        assert '<vehicle id="0" depart="0.00"/>' in content
 
 
 class TestGenerateTraffic:

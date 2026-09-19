@@ -17,14 +17,15 @@ This workspace contains an urban mobility simulation project for modelling how p
 
 The project is intended to provide an experimental environment where infrastructure and traffic conditions can be changed and the resulting effects on mobility can be simulated, measured and compared. See [`docs/vision.md`](../vision.md) for the full purpose and principles, and [`docs/roadmap.md`](../roadmap.md) for the planned delivery stages (R0–R5).
 
-**All four MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002 and
-MVP-003) is a real, working application — fetches OpenStreetMap data, builds a routable
-SUMO network clipped to a hand-drawn coverage outline, generates traffic and map context
-shapes (water/land use), and runs the simulation headless or via `sumo-gui`, all through
-the `simulator` console command. MVP-000 (workspace foundation: ADRs,
+**All five MVPs so far are complete.** `apps/simulator` (MVP-001, extended by MVP-002,
+MVP-003 and MVP-004) is a real, working application — fetches OpenStreetMap data, builds a
+routable SUMO network clipped to a hand-drawn coverage outline, generates synthetic car,
+bicycle and pedestrian traffic biased toward curated entry/exit roads, shows a real
+basemap image as visual context, and runs the simulation headless or via `sumo-gui`, all
+through the `simulator` console command. MVP-000 (workspace foundation: ADRs,
 methodology-compliance baseline, repo settings) closed first and MVP-001 built on top of
-it, with MVP-002 growing the covered area and MVP-003 adding visual context afterward. The
-repository was initialised
+it, with MVP-002 growing the covered area, MVP-003 adding visual context, and MVP-004
+adding multimodal traffic afterward. The repository was initialised
 from a generic, organisation-wide reference skeleton (referred to in the repository as a
 "grundplåt"); its bootstrap instructions (`_LÄS-MIG-FÖRST.md`) were fully carried out and
 the file deleted, per its own instruction, before either MVP began. No `packages/` exists
@@ -131,19 +132,24 @@ pedestrian/bicycle infrastructure, speed-limit overrides beyond OSM defaults, bu
 
 ### Mobility Simulation
 
-**Implemented, MVP-001 + MVP-002.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly
-pinned — `ADR-006`) is the simulation engine, not just a candidate anymore.
+**Implemented, MVP-001 + MVP-002 + MVP-004.** **SUMO** (`eclipse-sumo`/`traci`/`sumolib`,
+exactly pinned — `ADR-006`) is the simulation engine, not just a candidate anymore.
 `simulator.network.build_network()` converts the OSM extract into a routable network via
 `netconvert`, clipped to the coverage outline via `--keep-edges.in-geo-boundary`
-(verified for real: 4,250 edges, 1,756 junctions, up from MVP-001's original 519/227);
-`simulator.traffic.generate_traffic()` + `simulator.simulate.run_headless()`/`run_gui()`
-generate synthetic vehicle trips and run the simulation, headless or interactive.
+(verified for real: 4,250 edges, 1,756 junctions, up from MVP-001's original 519/227).
+`simulator.traffic.generate_traffic()`/`generate_bicycle_traffic()`/
+`generate_pedestrian_traffic()` generate synthetic car, bicycle and pedestrian trips —
+car trips biased toward a curated list of 8 real, named entry/exit roads
+(`apps/simulator/data/entry-exit-edges.json`) via `randomTrips.py --weights-prefix`, not
+spread uniformly across the network. `simulator.simulate.run_headless()`/`run_gui()` run
+the combined simulation, headless or interactive.
 
-Covered so far: vehicle movement, routing, traffic interactions, running to completion —
-for the outlined coverage area over a short simulated time window. Not yet covered:
-pedestrian/bicycle movement, traffic signals as a distinct concern, congestion analysis,
-dynamic network changes (out of scope for both MVP-001 and MVP-002, see their own
-documents).
+Covered so far: car, bicycle and pedestrian movement, routing, traffic interactions,
+running to completion — for the outlined coverage area over a simulated time window (400s
+by default). Not yet covered: a synthetic population (individual people with real
+origins/destinations/schedules — roadmap R2), traffic signals as a distinct concern,
+congestion analysis, dynamic network changes (out of scope for MVP-001/002/004, see their
+own documents).
 
 ### Population and Travel Demand
 
@@ -203,7 +209,7 @@ originally expected.
 
 ### Runtime
 
-`apps/simulator` (MVP-001, extended by MVP-002 and MVP-003) depends on:
+`apps/simulator` (MVP-001, extended by MVP-002, MVP-003 and MVP-004) depends on:
 
 * **SUMO** (`eclipse-sumo`/`traci`/`sumolib`, exactly pinned to `1.27.1`) — the mobility
   simulation engine. `ADR-006` records the choice, including a real gotcha: conda-forge's
@@ -225,6 +231,12 @@ originally expected.
   can be placed without further coordinate math. `ADR-008` records the choice (and the
   two rejected mechanisms — `polyconvert`-derived shapes, both plain and
   `shapely`-clipped — that were tried and found wanting first).
+* **`defusedxml`** (`>=0.7,<0.8`, MVP-003) — XXE-safe replacement for the stdlib
+  `xml.etree.ElementTree`, used by `simulator.context_features._read_net_bbox()` to parse
+  the committed `network.net.xml`. Not a response to a real exploit (that file is our own
+  `netconvert` output, not untrusted input) but a real, blocking finding from GitHub's
+  "SAST" check (Semgrep, `p/security-audit` + `p/owasp-top-ten`,
+  `python.lang.security.use-defused-xml`) on PR #6 — fixed properly, not suppressed.
 
 ### Development / tooling dependencies
 

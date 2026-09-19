@@ -12,6 +12,7 @@ import pytest
 from simulator.context_features import (
     DEFAULT_BACKGROUND_IMAGE,
     MANUAL_ROTATION,
+    PEDESTRIAN_EXAGGERATION,
     ContextFeatureError,
     _read_net_bbox,
     write_gui_settings,
@@ -67,6 +68,9 @@ class TestWriteGuiSettings:
         # rotation is applied as-is from MANUAL_ROTATION, not derived from the corners —
         # worth pinning down exactly, unlike the geometry-derived attributes above.
         assert f'rotation="{MANUAL_ROTATION}"' in content
+        # MVP-004 Phase 5: pedestrians were hard to spot at normal size — confirmed
+        # present, not just that *a* scheme exists.
+        assert f'person_exaggeration="{PEDESTRIAN_EXAGGERATION}"' in content
 
     def test_image_path_written_relative_to_settings_dir(self, tmp_path: Path) -> None:
         net_file = tmp_path / "test.net.xml"

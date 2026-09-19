@@ -2,6 +2,11 @@
 
 Implements [`docs/mvp/004-multimodal-city.md`](../mvp/004-multimodal-city.md).
 
+**Status:** Complete — all 5 phases done, MVP closed 2026-09-18 as delivered. Phase 5
+went beyond the plan's own TODOs after real project-owner review in `sumo-gui` surfaced
+concrete issues (id collisions, indistinguishable colours, hard-to-spot pedestrians,
+bicycle speed, density, runtime) — see the MVP's "Outcome at close" for the full account.
+
 ## 1. Goal
 
 Add cyclist and pedestrian traffic alongside cars, all still synthetically generated (not

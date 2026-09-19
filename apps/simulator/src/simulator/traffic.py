@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -19,18 +20,27 @@ MIN_VEHICLES = 10
 MIN_BICYCLES = 10
 MIN_PEDESTRIANS = 10
 DEFAULT_BEGIN = 0
-DEFAULT_END = 200
+# MVP-004 Phase 5: bumped from MVP-002's 200 — the project owner asked for more time to
+# watch the simulation run. Periods below are recomputed for this longer window to hold
+# the same target counts (~280 cars / ~210 bicycles / ~280 pedestrians) steady rather than
+# also doubling the traffic volume, which wasn't asked for.
+DEFAULT_END = 400
 # MVP-004: bumped from MVP-002's period=5.0 (~40 cars) toward the MVP's own city-centre-
 # scale floors (>=80 cars, >=60 bicycles, >=80 pedestrians) — starting points, tuned for
 # real against the actual network in docs/plans/004-multimodal-city.plan.md Phase 4, not
 # hard-locked here. Periods differ per mode only because each mode's target count differs
-# over the same begin/end window.
-DEFAULT_CAR_PERIOD = 2.5
-DEFAULT_BICYCLE_PERIOD = 3.3
-DEFAULT_PEDESTRIAN_PERIOD = 2.5
-# sumo-gui runs a simulation step as fast as it can by default — 200 simulated seconds
-# finishes in a couple of real seconds, too fast to actually watch. 200ms/step spreads
-# that over ~40 real seconds instead. Ignored entirely by headless `sumo` (gui_only).
+# over the same begin/end window. Bumped again, Phase 5: the project owner reviewed the
+# first (80/61/80) pass live in sumo-gui and asked for ~3-4x more — periods below target
+# ~280 cars / ~210 bicycles / ~280 pedestrians, confirmed against real generated counts,
+# not just this division; then re-derived again for DEFAULT_END's 200 -> 400 bump above,
+# to keep those same target counts rather than doubling them.
+DEFAULT_CAR_PERIOD = 1.42
+DEFAULT_BICYCLE_PERIOD = 1.9
+DEFAULT_PEDESTRIAN_PERIOD = 1.42
+# sumo-gui runs a simulation step as fast as it can by default — hundreds of simulated
+# seconds finish in a couple of real seconds, too fast to actually watch. 200ms/step
+# spreads DEFAULT_END's 400 simulated seconds over ~80 real seconds instead. Ignored
+# entirely by headless `sumo` (gui_only).
 DEFAULT_DELAY_MS = 200
 # Fixed, not random — matches the "Scenarios Should Be Reproducible" architectural
 # principle (docs/architecture/overview.md): the same inputs must produce the same traffic.
@@ -48,6 +58,22 @@ DEFAULT_ENTRY_EXIT_JSON = (
 # above the MVP's "majority" acceptance criterion), not just estimated from the edge
 # counts.
 DEFAULT_ENTRY_EXIT_BOOST_WEIGHT = 200.0
+
+# MVP-004 Phase 5: confirmed for real that without an explicit colour, every mode falls
+# back to the same SUMO default (yellow) — cars and bicycles were visually
+# indistinguishable in sumo-gui. "R,G,B" (0-1 floats), the format SUMO's <vType color=...>
+# expects.
+CAR_COLOR = "1,1,0"  # yellow — SUMO's own default, made explicit rather than implicit
+BICYCLE_COLOR = "0,1,0"  # green
+PEDESTRIAN_COLOR = "1,0,1"  # magenta — high-contrast against the map background
+
+# MVP-004 Phase 5: confirmed for real (sumo --tripinfo-output) that SUMO's own implicit
+# bicycle speed cap already averaged ~19 km/h vs. cars' ~34 km/h on this network — already
+# roughly half, but the project owner watched it in sumo-gui and still saw them as too
+# close on faster roads (bicycles aren't capped independently of the road's own speed
+# limit otherwise). An explicit, deliberately lower cap, in m/s (SUMO's own <vType
+# maxSpeed=...> unit).
+BICYCLE_MAX_SPEED = 4.17  # ~15 km/h
 
 
 class TrafficGenerationError(RuntimeError):
@@ -95,6 +121,61 @@ def _write_edge_weights(
     src_path.write_text(content, encoding="utf-8")
     dst_path.write_text(content, encoding="utf-8")
     return src_path, dst_path
+
+
+def _customize_vtype(
+    route_file: Path,
+    color: str,
+    default_type_id: str,
+    default_vclass: str,
+    *,
+    max_speed: float | None = None,
+) -> None:
+    """Give `route_file`'s vehicles/persons an explicit `color` (and, optionally,
+    `max_speed` in m/s), so different modes render distinguishably — and move
+    realistically relative to each other — in `sumo-gui`. Confirmed for real that with no
+    explicit colour anywhere, every mode falls back to the same default and is visually
+    indistinguishable; bicycles without an explicit speed cap can look barely slower than
+    cars on faster roads, even though their SUMO-default cap (~22 km/h) is already
+    reasonable on average — the project owner asked for a clearer, more deliberate gap.
+
+    Plain text substitution/insertion, not full XML parsing: the file's shape is fully
+    known (our own `randomTrips.py` output), and this avoids importing the stdlib
+    `xml.etree.ElementTree` for element construction, which would re-trigger the same
+    `python.lang.security.use-defused-xml` SAST finding `defusedxml` was already adopted
+    for elsewhere in this codebase (`simulator.context_features`).
+
+    If `randomTrips.py` already generated a `<vType>` (e.g. bicycles, via
+    `--vehicle-class`), customises it in place. Otherwise (e.g. cars, pedestrians — left
+    fully implicit by `randomTrips.py`) inserts one using SUMO's own internal default
+    type id (`default_type_id`, e.g. `"DEFAULT_VEHTYPE"`/`"DEFAULT_PEDTYPE"`), which every
+    untyped `<vehicle>`/`<person>` already uses — confirmed for real (via a real `sumo`
+    invocation) that this correctly overrides the default without needing to touch every
+    individual element, and that the inserted `vType` needs its own explicit `vClass`
+    too: SUMO defaults an unspecified `vType`'s `vClass` to `"passenger"` regardless of
+    its id — a real warning ("implicitly uses unsuitable vClass 'passenger'") was hit for
+    pedestrians before `default_vclass` was added here.
+    """
+    extra = f' color="{color}"'
+    if max_speed is not None:
+        extra += f' maxSpeed="{max_speed}"'
+
+    content = route_file.read_text(encoding="utf-8")
+    if 'vType id="' in content:
+        content = re.sub(
+            r'(<vType id="[^"]*"[^/]*)/>',
+            rf"\1{extra}/>",
+            content,
+            count=1,
+        )
+    else:
+        content = re.sub(
+            r"(<routes[^>]*>)",
+            rf'\1\n    <vType id="{default_type_id}" vClass="{default_vclass}"{extra}/>',
+            content,
+            count=1,
+        )
+    route_file.write_text(content, encoding="utf-8")
 
 
 def _run_random_trips(
@@ -190,7 +271,7 @@ def generate_traffic(
         vclass="passenger",
         boost_weight=boost_weight,
     )
-    return _run_random_trips(
+    result = _run_random_trips(
         net_file,
         route_file,
         begin=begin,
@@ -202,6 +283,10 @@ def generate_traffic(
         count_tag="<vehicle ",
         mode_label="car",
     )
+    _customize_vtype(
+        result, CAR_COLOR, default_type_id="DEFAULT_VEHTYPE", default_vclass="passenger"
+    )
+    return result
 
 
 def generate_bicycle_traffic(
@@ -219,7 +304,7 @@ def generate_bicycle_traffic(
     MVP's scope (`docs/mvp/004-multimodal-city.md`'s Scope: entry/exit bias is required
     for car traffic only).
     """
-    return _run_random_trips(
+    result = _run_random_trips(
         net_file,
         route_file,
         begin=begin,
@@ -235,6 +320,21 @@ def generate_bicycle_traffic(
         count_tag="<vehicle ",
         mode_label="bicycle",
     )
+    # randomTrips.py already generates a <vType> here (--vehicle-class); customise it in
+    # place — default_type_id/default_vclass are unused in that path but required by the
+    # shared helper's signature. max_speed: SUMO's own default bicycle cap (~22 km/h,
+    # confirmed for real via tripinfo-output) already looked reasonable on average, but
+    # the project owner watched it in sumo-gui and asked for a clearer, more deliberate
+    # gap from car speed (cars averaged ~34 km/h in the same real check) — an explicit,
+    # lower cap here, not a config left to SUMO's own implicit default.
+    _customize_vtype(
+        result,
+        BICYCLE_COLOR,
+        default_type_id="DEFAULT_VEHTYPE",
+        default_vclass="bicycle",
+        max_speed=BICYCLE_MAX_SPEED,
+    )
+    return result
 
 
 def generate_pedestrian_traffic(
@@ -249,7 +349,7 @@ def generate_pedestrian_traffic(
     """Generate random pedestrian trips over the parts of `net_file` that allow
     pedestrians, via `randomTrips.py --persontrips` (person/`<walk>` trips, not vehicles).
     """
-    return _run_random_trips(
+    result = _run_random_trips(
         net_file,
         route_file,
         begin=begin,
@@ -261,6 +361,13 @@ def generate_pedestrian_traffic(
         count_tag="<person ",
         mode_label="pedestrian",
     )
+    _customize_vtype(
+        result,
+        PEDESTRIAN_COLOR,
+        default_type_id="DEFAULT_PEDTYPE",
+        default_vclass="pedestrian",
+    )
+    return result
 
 
 def write_sumocfg(

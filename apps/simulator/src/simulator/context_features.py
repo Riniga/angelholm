@@ -51,6 +51,13 @@ MANUAL_SCALE_X = 1.0197715118404214
 MANUAL_SCALE_Y = 0.9542362298774799
 MANUAL_ROTATION = -2.0
 
+# MVP-004 Phase 5: even with an explicit, distinct colour (simulator.traffic), pedestrians
+# were still hard to spot at normal size against a busy city network — confirmed for real
+# by the project owner in sumo-gui. `person_exaggeration`/`"given person/type color"` are
+# real sumo-gui view-settings attributes, confirmed from SUMO's own bundled
+# tools/game/hiking/view.xml example (a pedestrian-focused game mode), not guessed.
+PEDESTRIAN_EXAGGERATION = 5.0
+
 
 class ContextFeatureError(RuntimeError):
     """Raised when placing the map context background fails."""
@@ -100,6 +107,18 @@ def write_gui_settings(
         f"""<?xml version="1.0" encoding="UTF-8"?>
 <viewsettings>
     <decal file="{image_rel}" centerX="{center_x}" centerY="{center_y}" width="{width}" height="{height}" rotation="{MANUAL_ROTATION}"/>
+    <scheme name="angelholm">
+        <vehicles vehicle_exaggeration="1.00">
+            <colorScheme name="given vehicle/type/route color">
+                <entry color="yellow"/>
+            </colorScheme>
+        </vehicles>
+        <persons person_exaggeration="{PEDESTRIAN_EXAGGERATION}">
+            <colorScheme name="given person/type color">
+                <entry color="blue"/>
+            </colorScheme>
+        </persons>
+    </scheme>
 </viewsettings>
 """,
         encoding="utf-8",
