@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/005-live-agent-engine.md`](../mvp/005-live-agent-engine.md).
 
-**Status:** In progress — Phases 1–4 done (agents module, live engine, wired into the command, static path removed); Phase 5 next.
+**Status:** In progress — Phases 1–5 done (engine built, wired in, static path removed, rates calibrated); Phase 6 (owner review, ADR, docs, close) next.
 
 ## 1. Goal
 
@@ -277,6 +277,43 @@ Measurement phase; code changes are limited to the constants in `agents.py`.
 7. Set this plan's status and `docs/roadmap.md` (R2 line for MVP-005) to delivered.
 8. Show the diff and hand over commit messages; the owner does the commits and opens the PR
    (no push or merge from here).
+
+### Findings from Phase 5 (calibration and long runs, headless, seed 1)
+
+* **MVP-004's rates were far too high for a run with no end.** At 0.705 / 0.528 / 0.705
+  spawns per second the city did not level off: after 2 simulated hours ~4,950 travellers
+  were present and still growing (cars 2,081 and rising, only ~55 % of spawned cars had
+  arrived). The owner confirmed the density looked far too high but "worked surprisingly
+  well" in `sumo-gui`.
+* **Steady state is roughly linear in the rate below the gridlock point** (concurrent
+  travellers, 2 simulated hours, cars/bicycles/pedestrians rates per second):
+  0.05/0.035/0.035 → ~110; 0.07/0.05/0.05 → ~120; **0.10/0.07/0.07 → ~200**;
+  0.20/0.14/0.14 → ~430; 0.35/0.25/0.25 → ~830. The break into gridlock lies somewhere
+  between 0.35 and 0.705 cars per second. `DEFAULT_RATES` is now 0.10 / 0.07 / 0.07
+  (≈ 50 cars / 45 bicycles / 105 pedestrians concurrently — pedestrians dominate because they
+  are slow). Higher density for a busier city is a one-line change; needs the owner's call in
+  Phase 6.
+* **Stable over time.** A 6-hour run stayed flat at ~200 with no drift (arrived tracks spawned
+  within a few hundred). A 24-hour run kept spawning and arriving normally, wrapped the
+  clock past midnight correctly, and the Python process stayed at ~85 MB throughout (no
+  leak — the empty-route + `setRoute` choice from Phase 2 works).
+* **Skips:** 0 skipped spawns in the 6-hour run at the calibrated rates (retries handle
+  unreachable pairs), so no need to restrict pools to the largest connected component yet.
+* **Curated entry/exit bias:** 74.5 % (1,609 of 2,159) of live car spawns start or end on
+  one of the 8 curated edges — a majority, in line with MVP-004's 73.8 %.
+* **Teleports and collisions.** Over 24 simulated hours: 64 teleports of stuck vehicles
+  (~2–3 per hour, recurring at the same few junctions, e.g. lane `24823496#4_0` and
+  `:269683051_1_0` — waits for yield/jam that SUMO's 300 s teleport resolves) and 31
+  vehicle–person collisions (SUMO reports these as warnings and carries on). These, plus
+  the owner's observation of pedestrians walking in the middle of roads and blocking
+  cyclists, point at routing/network details (crossings, pedestrian paths, signal
+  programs) — deliberately out of scope for this MVP, recorded for later.
+* **Warning noise:** a 6-hour run prints ~545 `No connection between edge` warnings (from
+  `findRoute`) and ~275 `Invalid arrivalPos` errors (handled by the retry). Left as is
+  rather than silencing SUMO's warnings globally; teleport and collision warnings are
+  useful and must stay visible.
+* `getArrivedNumber()` does not report persons (confirmed in Phase 2), so the id-set
+  observation stays.
 
 ### Findings from Phase 4
 

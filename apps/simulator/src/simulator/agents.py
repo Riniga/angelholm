@@ -44,14 +44,22 @@ DEFAULT_ENTRY_EXIT_JSON = (
 # live engine, where the same bias is applied to random draws instead of randomTrips.py.
 DEFAULT_ENTRY_EXIT_BOOST_WEIGHT = 200.0
 
-# MVP-005: starting spawn rates (individuals per simulated second), taken from MVP-004's
-# final tuned route counts over its 400 s window — 282 cars / 211 bicycles / 282
-# pedestrians (~0.705 / 0.528 / 0.705 per second). Calibrated against the live engine's real
-# steady-state concurrent count in docs/plans/005-live-agent-engine.plan.md Phase 5.
+# MVP-005: spawn rates (individuals per simulated second), calibrated for real against the
+# live engine (docs/plans/005-live-agent-engine.plan.md Phase 5), not derived on paper.
+# MVP-004's own batch rates (0.705 / 0.528 / 0.705 per second, right for a 400 s burst) are
+# far too high for a run with no end: they gridlocked into ~5,000 concurrent travellers still
+# growing after 2 simulated hours. Measured steady states (2 simulated hours, seed 1) scale
+# roughly linearly with the rate until well past this point:
+#   0.05 / 0.035 / 0.035  ->  ~110 concurrent      0.20 / 0.14 / 0.14  ->  ~430
+#   0.07 / 0.05  / 0.05   ->  ~120                 0.35 / 0.25 / 0.25  ->  ~830
+#   0.10 / 0.07  / 0.07   ->  ~200  (chosen)
+# ~200 concurrent (about 50 cars / 45 bicycles / 105 pedestrians — pedestrians dominate the
+# count because they are slow) is the project owner's own density target. Raise these to get
+# a busier city; the roughly linear range ends somewhere above 0.35 cars per second.
 DEFAULT_RATES: dict[Mode, float] = {
-    Mode.CAR: 0.705,
-    Mode.BICYCLE: 0.528,
-    Mode.PEDESTRIAN: 0.705,
+    Mode.CAR: 0.10,
+    Mode.BICYCLE: 0.07,
+    Mode.PEDESTRIAN: 0.07,
 }
 
 # MVP-004 Phase 5: confirmed for real that without an explicit colour, every mode falls
