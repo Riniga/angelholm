@@ -302,6 +302,46 @@ class TestStep:
         assert lines[0].startswith("05:15:00")
 
 
+class TestHourlySpawnLog:
+    def test_reports_spawns_in_the_last_hour_per_mode(self, traci_mock, caplog) -> None:
+        _clock(traci_mock, start=START_TIME + engine.HOURLY_LOG_SECONDS - 1)
+        live = LiveEngine(FakeSource(), [])
+        live.stats.spawned = {Mode.CAR: 120, Mode.BICYCLE: 30, Mode.PEDESTRIAN: 50}
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()  # reaches 06:00:00
+
+        lines = [r.message for r in caplog.records if "last hour" in r.message]
+        assert lines == [
+            "06:00:00  spawned in the last hour: 120 cars, 30 bicycles, 50 pedestrians"
+        ]
+
+    def test_counts_only_since_the_previous_hourly_line(
+        self, traci_mock, caplog
+    ) -> None:
+        _clock(traci_mock, start=START_TIME + engine.HOURLY_LOG_SECONDS - 1)
+        live = LiveEngine(FakeSource(), [])
+        live.stats.spawned = {Mode.CAR: 100, Mode.BICYCLE: 10, Mode.PEDESTRIAN: 20}
+        live.step()  # first hourly line: 100 / 10 / 20
+        live.stats.spawned = {Mode.CAR: 130, Mode.BICYCLE: 15, Mode.PEDESTRIAN: 22}
+        live._next_hourly_log = traci_mock.simulation.getTime() + 1  # due at next step
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()
+
+        lines = [r.message for r in caplog.records if "last hour" in r.message]
+        assert lines[-1].endswith("30 cars, 5 bicycles, 2 pedestrians")
+
+    def test_no_line_before_the_hour_is_full(self, traci_mock, caplog) -> None:
+        _clock(traci_mock)
+        live = LiveEngine(FakeSource(), [])
+
+        with caplog.at_level(logging.INFO, logger="simulator.engine"):
+            live.step()
+
+        assert not [r for r in caplog.records if "last hour" in r.message]
+
+
 class TestRun:
     def test_stops_at_max_sim_seconds_and_closes(self, traci_mock) -> None:
         _clock(traci_mock)

@@ -55,6 +55,7 @@ ID_PREFIX: dict[Mode, str] = {
 # the plan's spike), so a spawn retries with a fresh pair before giving up.
 MAX_SPAWN_ATTEMPTS = 10
 LOG_INTERVAL_SECONDS = 900  # one progress line per 15 simulated minutes
+HOURLY_LOG_SECONDS = 3600  # one "spawned in the last hour" line per simulated hour
 
 
 class SimulationError(RuntimeError):
@@ -100,6 +101,8 @@ class LiveEngine:
         self._counters: dict[Mode, int] = dict.fromkeys(Mode, 0)
         self._active_ids: dict[Mode, set[str]] = {mode: set() for mode in Mode}
         self._next_log = START_TIME + LOG_INTERVAL_SECONDS
+        self._next_hourly_log = START_TIME + HOURLY_LOG_SECONDS
+        self._spawned_at_last_hourly_log = dict.fromkeys(Mode, 0)
         self.stats = EngineStats()
 
     def start(self) -> None:
@@ -201,6 +204,9 @@ class LiveEngine:
         if now >= self._next_log:
             self._log_progress(now)
             self._next_log += LOG_INTERVAL_SECONDS
+        if now >= self._next_hourly_log:
+            self._log_hourly_spawns(now)
+            self._next_hourly_log += HOURLY_LOG_SECONDS
         return now
 
     def _log_progress(self, now: float) -> None:
@@ -213,6 +219,22 @@ class LiveEngine:
             active[Mode.PEDESTRIAN],
             sum(self.stats.spawned.values()),
             sum(self.stats.arrived.values()),
+        )
+
+    def _log_hourly_spawns(self, now: float) -> None:
+        """How many of each mode spawned in the last simulated hour — what the daily
+        rhythm and the mode mix look like in numbers, for long-run checks."""
+        last_hour = {
+            mode: self.stats.spawned[mode] - self._spawned_at_last_hourly_log[mode]
+            for mode in Mode
+        }
+        self._spawned_at_last_hourly_log = dict(self.stats.spawned)
+        logger.info(
+            "%s  spawned in the last hour: %d cars, %d bicycles, %d pedestrians",
+            format_clock(now),
+            last_hour[Mode.CAR],
+            last_hour[Mode.BICYCLE],
+            last_hour[Mode.PEDESTRIAN],
         )
 
     def run(self) -> EngineStats:

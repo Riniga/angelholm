@@ -11,6 +11,7 @@ Installed as the `simulator` console command (`pip install -e apps/simulator`):
     simulator --headless         # no GUI; runs until interrupted (Ctrl+C)
     simulator --headless --max-seconds 600   # stop after 600 simulated seconds
     simulator --seed 1           # reproducible pattern for debugging
+    simulator --stats my.json    # use another demand statistics file
     simulator --rebuild-network  # re-fetch OSM data and rebuild the network first
 """
 
@@ -22,6 +23,7 @@ from pathlib import Path
 
 from simulator.agents import Mode
 from simulator.context_features import write_gui_settings
+from simulator.demand import DEFAULT_DEMAND_JSON, DemandProfileError
 from simulator.engine import EngineStats, run_live
 from simulator.network import build_network, fetch_osm_extract, load_boundary_polygon
 
@@ -72,6 +74,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Seed the random spawning (patterns, not exact individuals, are what "
         "matters; useful for debugging). Default: different every run.",
     )
+    parser.add_argument(
+        "--stats",
+        type=Path,
+        default=DEFAULT_DEMAND_JSON,
+        help="Demand statistics file: trips per day, hourly profile, mode shares. "
+        "Default: the committed apps/simulator/data/demand-statistics.json.",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -89,13 +98,18 @@ def main(argv: list[str] | None = None) -> int:
             net_file, DATA_DIR / "angelholm-guisettings.xml"
         )
 
-    stats = run_live(
-        net_file,
-        headless=args.headless,
-        gui_settings_file=gui_settings_file,
-        seed=args.seed,
-        max_sim_seconds=args.max_seconds,
-    )
+    try:
+        stats = run_live(
+            net_file,
+            headless=args.headless,
+            gui_settings_file=gui_settings_file,
+            seed=args.seed,
+            max_sim_seconds=args.max_seconds,
+            demand_file=args.stats,
+        )
+    except DemandProfileError as error:
+        logger.error("Invalid demand statistics: %s", error)
+        return 1
     _log_summary(stats)
     return 0
 

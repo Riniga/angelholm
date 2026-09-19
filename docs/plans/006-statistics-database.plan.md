@@ -2,7 +2,7 @@
 
 Implements [`docs/mvp/006-statistics-database.md`](../mvp/006-statistics-database.md).
 
-**Status:** In progress — Phases 1–3 done (statistics file; loader; time-varying source); Phase 4 next.
+**Status:** In progress — Phases 1–4 done (statistics file; loader; time-varying source; wired into the run, `--stats`, hourly log); Phase 5 (readable time of day) next.
 
 ## 1. Goal
 
@@ -318,6 +318,23 @@ Use headless runs with a fixed `--seed` and read the hourly log lines from Phase
   15-minute line.
 
 ## Findings
+
+### Findings from Phase 4
+
+* `--stats PATH` works; an invalid file gives one readable line and exit code 1, no traceback
+  (real check with a 23-hour profile: `Invalid demand statistics: hourly_profile.weights must be
+  a list of exactly 24 numbers … got 23`).
+* **The acceptance criterion "change the file, change the behaviour" was demonstrated for
+  real:** the same seed and 2 hours with the committed shares (60/15/25) spawned 660 cars /
+  151 bicycles / 246 pedestrians; with a scratch copy at 90/5/5 it spawned 980 / 49 / 48, and
+  the start-up line printed the new shares. No code change between the two runs.
+* **The hourly log line works and shows the daily rhythm** (4-hour run, seed 1, spawned in the
+  last hour): 05–06: 213 cars / 58 bicycles / 90 pedestrians → 06–07: 447 / 93 / 156 →
+  07–08: 726 / 179 / 319 → 08–09: 662 / 172 / 258. Cars clearly the largest group; the morning
+  rises about 3.4× from the first hour to the peak.
+* Concurrent travellers over the same run: ~50 at 05:15, ~130–150 around 07:30–08:45, roughly
+  what MVP-005 held all day at 0.24 spawns/s — the peak here is a little above MVP-005's
+  steady state, well under the gridlock ceiling. Calibration and multi-day stability are Phase 6.
 
 ### Findings from Phase 3
 

@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from unittest.mock import patch
 
+from simulator.demand import DEFAULT_DEMAND_JSON, DemandProfileError
 from simulator.engine import EngineStats
 from simulator.run import main
 
@@ -41,6 +42,7 @@ class TestMain:
             gui_settings_file=tmp_path / "angelholm-guisettings.xml",
             seed=None,
             max_sim_seconds=None,
+            demand_file=DEFAULT_DEMAND_JSON,
         )
 
     def test_missing_network_triggers_fetch_and_build_even_without_flag(
@@ -113,6 +115,7 @@ class TestMain:
             gui_settings_file=None,
             seed=None,
             max_sim_seconds=None,
+            demand_file=DEFAULT_DEMAND_JSON,
         )
 
     def test_seed_and_max_seconds_are_passed_through(
@@ -144,3 +147,33 @@ class TestMain:
         assert "car: spawned 0" in caplog.text
         assert "pedestrian: spawned 0" in caplog.text
         assert "Peak concurrent travellers: 42" in caplog.text
+
+    def test_stats_option_is_passed_through(self, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        (tmp_path / "network.net.xml").write_text("<net/>")
+        stats_file = tmp_path / "my-stats.json"
+
+        with patch("simulator.run.run_live", return_value=EngineStats()) as mock_live:
+            main(["--headless", "--stats", str(stats_file)])
+
+        assert mock_live.call_args.kwargs["demand_file"] == stats_file
+
+    def test_invalid_statistics_give_a_readable_error_and_exit_code_1(
+        self, tmp_path: Path, monkeypatch, caplog
+    ) -> None:
+        monkeypatch.setattr("simulator.run.DATA_DIR", tmp_path)
+        (tmp_path / "network.net.xml").write_text("<net/>")
+
+        with (
+            patch(
+                "simulator.run.run_live",
+                side_effect=DemandProfileError("hourly_profile.weights must be 24"),
+            ),
+            caplog.at_level(logging.ERROR, logger="simulator.run"),
+        ):
+            exit_code = main(["--headless"])
+
+        assert exit_code == 1
+        assert "Invalid demand statistics: hourly_profile.weights must be 24" in (
+            caplog.text
+        )
