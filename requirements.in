@@ -30,7 +30,7 @@ colorama==0.4.6
 
 # Ruff is pinned exactly — its formatter/lint output changes between minor versions. Keep
 # it on the same version as `rev` in .pre-commit-config.yaml.
-ruff==0.16.7
+ruff==0.16.8
 pre-commit>=3,<5
 # docs/standards/testing.md and ci.yml's "Run tests" job both assume pytest-cov (`pytest
 # --cov`), but nothing had actually added it as a dependency until now — a real gap that
