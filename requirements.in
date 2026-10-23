@@ -68,7 +68,7 @@ shapely>=2.0,<3
 # docs/standards/dependencies.md's allow-list.
 numpy>=1.26,<3
 opencv-python-headless>=4.9,<5
-pillow>=10,<13
+pillow>=13.0.0,<14
 
 # MVP-003 (docs/plans/003-map-context-features.plan.md, ADR-008): places the project
 # owner's own basemap image as a georeferenced sumo-gui background, so the covered area
